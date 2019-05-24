@@ -113,8 +113,110 @@ fig_01_dta %>%
 
 Around  0.157 years/year, not the 0.208 given in the paper. 
 
-And now for all available countries 
 
+Now how has this continued?
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() 
+
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  geom_vline(xintercept = 1996)
+```
+
+So the interesting aspect of this is that life expectancy trends improved in all high income countries over the 1990s and 2000s at a faster rate. Looks to be 1993 onwards 
+
+What does this look like for the earlier and later period? 
+
+```{r}
+
+tmp %>% 
+  lm(mean_e0 ~ year, .) %>% 
+  summary()
+
+tmp %>% 
+  filter(year < 1993) %>% 
+  lm(mean_e0 ~ year, .) %>% 
+  summary()
+
+tmp %>% 
+  filter(year >= 1993) %>% 
+  lm(mean_e0 ~ year, .) %>% 
+  summary()
+
+
+
+```
+
+So, from 1955 to 1992, mean life expectancy increased by on average 0.159 years per year. 
+
+But from 1993 to 2016, mean life expectancy increased by on average 0.254 years per year, with a near perfect correlation. 
+
+
+Let's look at how the UK compares with this. 
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() 
+
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  geom_vline(xintercept = 1996) +
+  geom_point(
+    aes(x = year, y = e0),
+    inherit.aes = F, 
+    data = dta_e0 %>% 
+      filter(sex == "total") %>% 
+      filter(code == "GBR_NP") %>% 
+      filter(between(year, 1955, 2016)) ,
+    colour = "red", shape = 2
+  )
+
+```
+
+And what was the rate of improvement in UK only?
+
+```{r}
+
+
+dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(code == "GBR_NP") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  lm(e0 ~ year, .) %>% 
+  summary()
+
+dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(code == "GBR_NP") %>% 
+  filter(between(year, 1955, 1992)) %>% 
+  lm(e0 ~ year, .) %>% 
+  summary()
+
+dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(code == "GBR_NP") %>% 
+  filter(between(year, 1993, 2016)) %>% 
+  lm(e0 ~ year, .) %>% 
+  summary()
+
+
+
+
+```
 
 
 ## Figure 2
@@ -136,7 +238,151 @@ fig_02_dta %>%
 
 ```
 
+And how about subsequent to this?
 
+```{r}
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0))
+  
+tmp %>%
+  ggplot(aes(x = year, y = ch_e0)) +
+  geom_point() + geom_line() +
+  geom_vline(xintercept = 1996) +
+  geom_hline(yintercept = 0)
+
+```
+
+It seems clear that life expectancy improvements accelarted after the early 1990s in the 21 high income countries. However also that the 2014-15 fall represented the first year of falling life expectancy (on average) since 1992-3. 
+
+Let's see how the UK compares with this 
+
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0))
+  
+tmp2 <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  filter(code == "GBR_NP") %>% 
+  mutate(ch_e0 = e0 - lag(e0))
+
+tmp %>%
+  ggplot(aes(x = year, y = ch_e0)) +
+  geom_point() + geom_line() +
+  geom_point(
+    aes(x = year, y = ch_e0),
+    colour = "red", shape = 2, 
+    data = tmp2,
+    inherit.aes = F
+  ) + 
+  geom_line(
+    aes(x = year, y = ch_e0),
+    colour = "red", linetype = "dashed", 
+    data = tmp2,
+    inherit.aes = F
+  ) + 
+
+  geom_vline(xintercept = 1996) +
+  geom_hline(yintercept = 0)
+
+
+
+```
+
+And now what about Scotland?
+
+```{r}
+
+
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0))
+  
+tmp2 <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  filter(code == "GBR_SCO") %>% 
+  mutate(ch_e0 = e0 - lag(e0))
+
+tmp %>%
+  ggplot(aes(x = year, y = ch_e0)) +
+  geom_point() + geom_line() +
+  geom_point(
+    aes(x = year, y = ch_e0),
+    colour = "blue", shape = 2, 
+    data = tmp2,
+    inherit.aes = F
+  ) + 
+  geom_line(
+    aes(x = year, y = ch_e0),
+    colour = "blue", linetype = "dashed", 
+    data = tmp2,
+    inherit.aes = F
+  ) + 
+
+  geom_vline(xintercept = 1996) +
+  geom_hline(yintercept = 0)
+
+
+
+```
+
+
+And the following does this for each of the countries 
+
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(mean_ch_e0 = mean_e0 - lag(mean_e0)) %>% 
+  select(year, mean_ch_e0)
+
+tmp2 <- dta_e0 %>% 
+  filter(sex == "total") %>%
+  filter(code %in% high_income_countries) %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>%
+  ungroup() %>% 
+  select(year, code, ch_e0)
+
+tmp3 <- left_join(tmp2, tmp, by = c("year" = "year"))
+
+tmp3
+
+tmp3 %>% 
+  ggplot(aes(x = year)) + 
+  geom_point(aes(y = mean_ch_e0), colour = "grey", alpha = 0.5) + 
+  geom_line(aes(y = mean_ch_e0), colour = "grey", alpha = 0.5) + 
+  geom_point(aes(y = ch_e0)) + geom_line(aes(y = ch_e0)) + 
+  facet_wrap(~code) +
+  geom_hline(yintercept = 0)
+
+```
 
 
 ## Figure 3
@@ -190,13 +436,203 @@ dta_e0 %>%
   ggrepel::geom_text_repel(aes(label = code)) 
 ```
 
+And what about more recently?
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) 
+
+tmp %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  labs(x = "Life expectancy in 1955 (years)", y = "Average annual change in life expectancy") + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code))
+
+```
+
+How about since 2010 only?
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 2010, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_2010 = ifelse(2010 %in% year, e0[year == 2010], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_2010, mean_ch_e0) 
+
+tmp %>% 
+  ggplot(aes(x = val_in_2010, y = mean_ch_e0)) +
+  geom_point() + 
+  labs(x = "Life expectancy in 2010 (years)", y = "Average annual change in life expectancy") + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  stat_smooth(method = "lm", se = F, colour = "black")
+
+```
+
+This is an important 'dog that didn't bark': there's no apparent association between the rate of slowdown since 2010 and the life expectancy in 2010. Though the long-term tendency may be for there to be a slowdown, it's not something that explains what happened this time. 
+
+Let's see if this were the case for other five year periods
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  mutate(decade = cut(year, seq(1955, 2015, by = 10), include.lowest = T)) %>% 
+  group_by(code, decade) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year))
+
+tmp2 <- tmp %>% filter(code == "GBR_NP")
+
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = decade, colour = decade, shape = decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = decade, colour = decade, shape = decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F)
+
+```
+This figure shows that the degree to which the limits-to-growth argument holds in high income countries is falling, rather than increasing, again suggesting it is not an important factor in explaining the recent slowdown in the UK (highlighted with a translucent symbol). 
+
+
+## Tadpole charts and derivatives 
+
+To start let's just show e0 against change in e0 for all countries, just as points 
+
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = e0, y = ch_e0)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  stat_smooth(method = "lm", se = F)
+```
+
+Here there seems to be no relationship whatsoever. 
+
+But what if there's a Simpson's Paradox style issue here? What do the relationships look like for each of the groups?
+
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>%
+  ungroup()
+
+tmp %>% 
+  ggplot(aes(x = e0, y = ch_e0, group = code)) + 
+  geom_hline(yintercept = 0) +
+  geom_line(
+    stat = "smooth", method = "lm", se = F, 
+    colour = "black", alpha = 0.5) + 
+  stat_smooth(
+    method = "lm", se = F, 
+    data = tmp %>% filter(code == "GBR_NP")
+  )
+
+```
+
+Once again, there's no obvious trend indicating a limit to life expectancy, and the UK is one of a number of countries where the long-term correlation between life expectancy and change in life expectancy is positive rather than negative. 
+
+Perhaps this issue is confounded by the negative autocorrelation found between annual lags. To investigate this we could try the average of two years rather than a single year
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>%
+  mutate(avg_e0 = (e0 + lag(e0) / 2)) %>% 
+  mutate(lag_ch_e0 = lag(ch_e0)) %>% 
+  mutate(avg_ch_e0 = (ch_e0 + lag_ch_e0) / 2) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = avg_e0, y = avg_ch_e0)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  stat_smooth(method = "lm", se = F)
+
+
+```
+Again this makes no appreciable difference
+
+```{r}
+
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>%
+  mutate(lag_ch_e0 = lag(ch_e0)) %>% 
+  mutate(avg_e0 = (e0 + lag(e0) / 2)) %>% 
+  mutate(avg_ch_e0 = (ch_e0 + lag_ch_e0) / 2) %>% 
+  ungroup()
+
+tmp %>% 
+  ggplot(aes(x = avg_e0, y = avg_ch_e0, group = code)) + 
+  geom_hline(yintercept = 0) +
+  geom_line(
+    stat = "smooth", method = "lm", se = F, 
+    colour = "black", alpha = 0.5) + 
+  stat_smooth(
+    method = "lm", se = F, 
+    data = tmp %>% filter(code == "GBR_NP")
+  )
+
+```
+
+Again, this does not seem to make any difference. 
+
 
 
 ## Table 3
 
+To do or not bother. I think we have what we need for a short paper. 
+
 ## Figure 4
 
-Variance ebtween life expectancies for 21 high-income countries, 1955-96
+Variance tween life expectancies for 21 high-income countries, 1955-96
 
 ```{r}
 dta_e0 %>% 
