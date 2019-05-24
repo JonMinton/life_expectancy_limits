@@ -1,0 +1,346 @@
+---
+title: "Slowdown hypothesis"
+output: html_notebook
+---
+
+# Introduction 
+
+The aim of this notebook is to extend and update the analyses presented in [White (2002)](https://onlinelibrary.wiley.com/doi/pdf/10.1111/j.1728-4457.2002.00059.x). 
+
+The figures/analyses are as follows:
+
+* Table 1: How well does a linear time trend in 21 high-income countries explain change in life exptectancy at birth between 1955 and 1991? 
+* Figure 1: Life expectancy at birth over time, unweighted averages of 21 high-income countries, 1955-96
+* Table 2: Change in age-specific death rates between 1955 and 1991, unweighted averages for 21 high-income countries
+* Figure 2: Annual change in life expectancy at birth, average of 21 high-income countries, 1955-96
+* Figure 3: relationship between life expectancy at birth in 1995 and annual change in life expectancy in 21 high-income countries, 1955-96
+* Table 3: Life expectancy at birth and difference from average $e_{0}$ in 21 high-income countries, 1955 to 1995
+* Figure 4: Variance betwene life expectancies for 21 high-income countries, 1955-96
+* Figure 5: Relationship between early (1955-75) and late (1975-95) gains in life expectancy for 21 high-income countries 
+
+All but one of the above can be replicated with the period life expectancy data alone
+
+## Prereqs
+
+```{r}
+pacman::p_load(
+  tidyverse, HMDHFDplus,
+  ggrepel
+)
+
+dta_e0 <- read_rds("tidy_data/e0_period.rds")
+
+```
+
+## First step: define countries 
+
+The high income countries were: 
+
+* Australia (AUS)
+* Austria (AUT)
+* Belgium (BEL)
+* Canada (CAN)
+* Denmark (DNK)
+* Finland (FIN)
+* France (FRATNP)
+* Germany (West) (DEUTW)
+* Greece (GRC)
+* Ireland (IRL)
+* Italy (ITA)
+* Japan (JPN)
+* Netherlands (NLD)
+* New Zealand (NZL_NP)
+* Norway (NOR)
+* Portugal (PRT)
+* Spain (ESP)
+* Sweden (SWE)
+* Switzerland (CHE)
+* United Kingdom (GBR_NP)
+* United States (USA)
+
+
+```{r}
+high_income_countries <- 
+  c(
+    "AUS", "AUT", "BEL", "CAN", "DNK", "FIN",
+    "FRATNP", "DEUTW", "GRC", "IRL", "ITA", "JPN",
+    "NLD", "NZL_NP", "NOR", "PRT", "ESP", "SWE",
+    "CHE", "GBR_NP", "USA"
+  )
+
+all_distinct_countries <- c(
+  "AUS", "AUT", "BEL", "BGR", "BLR", "CAN", "CHL", "HRV", "CHE",
+  "CZE", "DEUTE", "DEUTW", "DNK", "ESP", "EST", "FIN", "FRATNP", "GRC", "HUN",
+  "IRL", "ISL", "ISR", "ITA", "JPN", "KOR", "LTU", "LUX", "LVA", "NLD", "NOR",
+  "NZL_NP",
+  "POL", "PRT", "RUS", "SVK", "SN", "SWE", "TWN", "UKR", "GBR_NP", "USA"
+)
+
+```
+
+# Replications 
+
+## Table 1
+
+To do
+
+## Figure 1
+
+Life expectancy at birth over time, unweighted averages of 21 high-income countries, 1955-96
+
+```{r}
+fig_01_dta <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 1996)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() 
+
+fig_01_dta %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") 
+```
+
+And what's the average improvement per year?
+
+```{r}
+fig_01_dta %>% 
+  lm(mean_e0 ~ year, data = .) %>% 
+  summary()
+
+```
+
+Around  0.157 years/year, not the 0.208 given in the paper. 
+
+And now for all available countries 
+
+
+
+## Figure 2
+
+
+```{r}
+fig_02_dta <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 1996)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0))
+  
+fig_02_dta %>% 
+  ggplot(aes(x = year, y = ch_e0)) + 
+  geom_point() + geom_line()
+
+```
+
+
+
+
+## Figure 3
+
+```{r}
+dta_for_fig03 <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 1996)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) 
+
+dta_for_fig03 %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  labs(x = "Life expectancy in 1955 (years)", y = "Average annual change in life expectancy") + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code))
+
+
+
+```
+
+What about for all HMD countries?
+
+
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 1996)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  labs(x = "Life expectancy in 1955 (years)", y = "Average annual change in life expectancy") + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) 
+```
+
+
+
+## Table 3
+
+## Figure 4
+
+Variance ebtween life expectancies for 21 high-income countries, 1955-96
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  mutate(group = ifelse(!(code %in% c("GRC", "IRL", "PRT", "ESP")), "inc", "exc")) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 1996)) %>% 
+  group_by(group, year) %>% 
+  mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
+  mutate(diff_from_mean = e0 - mean_e0) %>% 
+  summarise(var = var(diff_from_mean)) %>% 
+  ggplot(aes(x = year, y = var, group = group)) + 
+  geom_point() + geom_line() +
+  scale_y_continuous(limits = c(0, 12))
+
+```
+
+First question is what does this now look like?
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  mutate(group = ifelse(!(code %in% c("GRC", "IRL", "PRT", "ESP")), "inc", "exc")) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  group_by(group, year) %>% 
+  mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
+  mutate(diff_from_mean = e0 - mean_e0) %>% 
+  summarise(var = var(diff_from_mean)) %>% 
+  ggplot(aes(x = year, y = var, group = group)) + 
+  geom_point() + geom_line() +
+  scale_y_continuous(limits = c(0, 12))
+
+```
+
+So, there's been a steady increase in the variance between countries after 2010. *This is an important finding*. 
+
+Secondly, what does this look like for all countries?
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  mutate(group = ifelse(!(code %in% c("GRC", "IRL", "PRT", "ESP")), "inc", "exc")) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  group_by(group, year) %>% 
+  mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
+  mutate(diff_from_mean = e0 - mean_e0) %>% 
+  summarise(var = var(diff_from_mean)) %>% 
+  ggplot(aes(x = year, y = var, group = group)) + 
+  geom_point() + geom_line() +
+  scale_y_continuous(limits = c(0, 20))
+
+```
+
+This looks to be undermined by changing population composition. 
+
+
+For the higher income countries in the original selection, let's plot the difference for each individual country
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
+  mutate(diff_from_mean = e0 - mean_e0) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, y = diff_from_mean)) + 
+  facet_wrap(~code) + 
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 1996)
+
+```
+
+Now let's present this all at once
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
+  mutate(diff_from_mean = e0 - mean_e0) %>%
+  ungroup()
+
+tmp %>% 
+  ggplot(aes(x = year, y = diff_from_mean, group = code)) + 
+  geom_line(alpha = 0.6) +
+  geom_line(aes(x = year, y = diff_from_mean, group = code, colour = code), 
+            inherit.aes = F, size = 1.5, 
+            data = tmp %>% 
+              filter(code %in% c("USA", "GBR_NP"))
+            ) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 1996)
+
+
+```
+
+Both the UK and USA are distinct, but in different ways. 
+
+The USA had been declining in relative terms for many years, with a post 2010 acceleration.
+
+Whereas the UK had been stagnating in relative terms for many years, then falling more rapidly post 2012ish. 
+
+Let's just replicate the above for only 1997 onwards
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1997, 2016)) %>% 
+  group_by(year) %>% 
+  mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
+  mutate(diff_from_mean = e0 - mean_e0) %>%
+  ungroup()
+
+tmp %>% 
+  ggplot(aes(x = year, y = diff_from_mean, group = code)) + 
+  geom_line(alpha = 0.6) +
+  geom_line(aes(x = year, y = diff_from_mean, group = code, colour = code), 
+            inherit.aes = F, size = 1.5, 
+            data = tmp %>% 
+              filter(code %in% c("USA", "GBR_NP"))
+            ) +
+  geom_hline(yintercept = 0) 
+
+
+```
+
+## Figure 5
+
+
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

@@ -1,0 +1,88 @@
+---
+title: "Data management"
+output: html_notebook
+---
+
+# Intro
+This script will aim to set up the project to use tidyverse packages, and use the hfdhmdplus library to download requisite data. To start with only life expectancy estimates will be required
+
+# Load packages 
+
+
+n.b. `pacman1` has been installed already
+
+```{r}
+pacman::p_load(
+  tidyverse,
+  HMDHFDplus
+)
+```
+
+# HMD 
+ 
+Which countries are available?
+ 
+```{r}
+all_countries <- getHMDcountries() 
+ 
+```
+
+For each country, want to know which items are available 
+
+But first the username and password need to be identified
+
+```{r}
+my_username <- userInput()
+```
+```{r}
+my_password <- userInput()
+```
+
+```{r}
+country_availability <- tibble(
+  code = all_countries
+) %>% 
+  mutate(
+    available_items = map(.x = code, .f = getHMDitemavail,
+                          username = my_username, password = my_password
+                          
+  ),
+  contains_e0 = map_lgl(available_items, ~`%in%`("E0per", .x))
+) 
+
+```
+
+
+```{r}
+country_availability
+```
+
+All countries have the item `E0per`.
+
+
+Now we want to extract E0per for each country
+
+```{r}
+e0_data <- tibble(
+  code = all_countries
+) %>% 
+  mutate(
+    eo_df = map(code, readHMDweb, item = "E0per", username = my_username, password = my_password)
+  ) %>% 
+  unnest() %>% 
+  gather(key = "sex", value = "e0", Female:Total) %>% 
+  mutate(sex = tolower(sex)) %>% 
+  rename(year = Year)
+
+
+```
+
+
+Now to write this out
+
+```{r}
+write_rds(e0_data, path = "tidy_data/e0_period.rds")
+
+```
+
+
