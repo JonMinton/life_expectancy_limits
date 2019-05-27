@@ -218,6 +218,122 @@ dta_e0 %>%
 
 ```
 
+### Life expectancy for best country (labelled by this country)
+
+
+A similar approach to White (2002) is presented in [Christenson 2009](https://linkinghub.elsevier.com/retrieve/pii/S0140673609614604) Their approach is to look at life expectancy for the top performing country, rather than the average of these. Let's now replicate this 
+
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(
+    max_e0 = max(e0, na.rm = T),
+    which_code = code[e0 == max(e0)]
+    ) %>% 
+  ungroup() 
+
+tmp %>% 
+  ggplot(aes(x = year, y = max_e0)) +
+  geom_point() +
+  geom_text(
+    aes(x = year, y = max_e0, label = which_code), 
+    inherit.aes = F,
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = 0.5
+    
+  ) + 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  geom_vline(xintercept = 1996)
+
+```
+
+Japan has remained the high income country with the highest life expectancy since the mid 1980s. 
+
+
+
+What's the linear rate of improvement for the best performing line compared with the average improvement line? 
+
+```{r}
+tmp %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  lm(max_e0 ~ year, .) %>% 
+  summary()
+
+```
+
+So, the rate of improvement has been about 0.196 years/year for the best performing line, compared with 0.191 years/ year for the average of the 21 countries. 
+
+Let's now plot the mean, upper and lower together. 
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(
+    max_e0 = max(e0, na.rm = T),
+    which_code_max = code[e0 == max(e0)],
+    min_e0 = min(e0, na.rm = T),
+    which_code_min = code[e0 == min(e0)],
+    mean_e0 = mean(e0, na.rm = T),
+    uk_e0 = e0[code == "GBR_NP"]
+    ) %>% 
+  ungroup() 
+
+tmp %>% 
+  ggplot(aes(x = year)) +
+  geom_point(aes(y = max_e0), colour = "green") +
+  geom_text(
+    aes(x = year, y = max_e0, label = which_code_max), 
+    inherit.aes = F,
+    colour = "green",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = 0.5
+  ) + 
+  geom_point(aes(y = mean_e0)) +
+  geom_point(aes(y = min_e0), colour = "red") +
+  geom_point(aes(y = uk_e0), colour = "blue") +
+  geom_text(
+    aes(x = year, y = min_e0, label = which_code_min), 
+    inherit.aes = F,
+    colour = "red",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = - 0.5
+  ) + 
+  
+  stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "green", linetype = "dashed") +
+  stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
+  stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "blue", linetype = "dashed") +
+
+  geom_vline(xintercept = 1996)
+
+```
+
+In the figure above, the red dots show the worst performing of the 21 high income countries, the green dots that for the best performing country. The black dots show the average (mean) for these countries, and the blue dots show the life expectancies for the UK. Every five years, the best and worst performing country is labelled. 
+
+```{r}
+tmp %>% 
+  lm(max_e0 ~ year, .) %>% 
+  summary()
+
+tmp %>% 
+  lm(min_e0 ~ year, .) %>% 
+  summary()
+
+```
+
+The average annual improvement for the best-performing country is 0.199 years/year, with an R-squared of 0.979.
+
+For the worst-performing country, the average annual improvement is 0.300 years/year, indicating a tendency towards convergence. The R-squared is somewhat lower, at 0.966. 
+
+The USA has been the worst performing high income country since the early 2000s, and its life expectancy has fallen steadily below the long-term trend for worst-performing countries. 
+
+The UK's life expectancy was that projected for the worst-performing country trend in 2015, and in 2016 fell below the linear projection for the worst performing country. 
 
 ## Figure 2
 
@@ -344,6 +460,69 @@ tmp %>%
 
 
 ```
+
+How about Japan and the USA?
+
+```{r}
+
+
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0))
+  
+tmp2 <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  filter(code == "JPN") %>% 
+  mutate(ch_e0 = e0 - lag(e0))
+
+tmp3 <- dta_e0 %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  filter(code == "USA") %>% 
+  mutate(ch_e0 = e0 - lag(e0))
+
+tmp %>%
+  ggplot(aes(x = year, y = ch_e0)) +
+  geom_point() + geom_line() +
+  geom_point(
+    aes(x = year, y = ch_e0),
+    colour = "blue", shape = 2, 
+    data = tmp2,
+    inherit.aes = F
+  ) + 
+  geom_line(
+    aes(x = year, y = ch_e0),
+    colour = "blue", linetype = "dashed", 
+    data = tmp2,
+    inherit.aes = F
+  ) + 
+  geom_point(
+    aes(x = year, y = ch_e0),
+    colour = "red", shape = 3, 
+    data = tmp3,
+    inherit.aes = F
+  ) + 
+  geom_line(
+    aes(x = year, y = ch_e0),
+    colour = "red", linetype = "dashed", 
+    data = tmp3,
+    inherit.aes = F
+  ) + 
+
+  geom_vline(xintercept = 1996) +
+  geom_hline(yintercept = 0)
+
+
+
+```
+
+The departure in the form the average is very clear in this figure, with the annual changes in the USA declining after 2008, and not improving at the average rate in the early 2000s either. Since the 1980s the USA appears to slow down worse than the average in the down-turns, then not recover as quickly as the average in the up-turns! 
 
 
 And the following does this for each of the countries 
@@ -766,6 +945,8 @@ tmp %>%
 
 
 ```
+This also seems to be an important paper, as it shows how both the UK and the USA have been falling from the rich country mean more rapidly after 2012, though faster and from a lower starting point (of longer term relative decline) for the USA. 
+
 
 ## Figure 5
 
