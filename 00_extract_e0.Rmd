@@ -53,6 +53,7 @@ country_availability <- tibble(
 ```
 
 
+
 ```{r}
 country_availability
 ```
@@ -86,3 +87,26 @@ write_rds(e0_data, path = "tidy_data/e0_period.rds")
 ```
 
 
+
+# Extract age-specific mortality rates too 
+
+The main things to work out are whether there have been similar trends in infancy, young adulthood, and elderly trends in many countries.
+
+Perhaps it would be good to get correlations between trends for these different age groups?
+
+I think we should extract `Mx_1x1`
+
+```{r}
+Mx_data <- tibble(
+  code = all_countries
+) %>% 
+  mutate(
+    Mx_df = map(code, readHMDweb, item = "Mx_1x1", username = my_username, password = my_password)
+  )
+  # ) %>% 
+  # unnest() %>% 
+  # gather(key = "sex", value = "e0", Female:Total) %>% 
+  # mutate(sex = tolower(sex)) %>% 
+  # rename(year = Year)
+  # 
+```
