@@ -68,7 +68,7 @@ e0_data <- tibble(
   code = all_countries
 ) %>% 
   mutate(
-    eo_df = map(code, readHMDweb, item = "E0per", username = my_username, password = my_password)
+    e0_df = map(code, readHMDweb, item = "E0per", username = my_username, password = my_password)
   ) %>% 
   unnest() %>% 
   gather(key = "sex", value = "e0", Female:Total) %>% 

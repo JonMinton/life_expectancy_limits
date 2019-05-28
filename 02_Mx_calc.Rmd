@@ -1,0 +1,219 @@
+---
+title: "Age Specific Mortality Rate Trends "
+output: html_notebook
+---
+
+# Intro
+
+This doc will describe some of the average trends at specific ages from 21 high income countries.
+
+It is inspired by [Christensen 2010](https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(09)61460-4/fulltext), which showed
+
+* Probability of dying in next 12 months
+* At age 80 and age 90
+* Males and females 
+* Selected countries 
+    * England & Wales
+    * France
+    * East Germany
+    * West Germany
+    * Japan
+    * Sweden
+    * USA
+  
+  
+However, as per the figures in [White 2002](https://onlinelibrary.wiley.com/doi/pdf/10.1111/j.1728-4457.2002.00059.x)), the average of 21 high income countries will be used instead, as well as the best-performing country at these different age groups. 
+
+Additionally, the 12 month mortality probabilities at the following ages will also be calculated:
+
+* 0-1 years
+* 40 years
+
+The aim will be to determine how strongly the (log of these) trends are correlated. 
+
+# Pre reqs
+
+
+```{r}
+pacman::p_load(
+  tidyverse, HMDHFDplus,
+  ggrepel
+)
+
+dta_Mx <- read_rds("tidy_data/Mx_data.rds")
+
+```
+
+ Define countries 
+```{r}
+source("scripts/country_definitions.R")
+
+
+```
+
+# Replication of Fig 2 of Christenson et al 2010
+
+```{r}
+
+dta_Mx %>% 
+  filter(sex != "total") %>% 
+  filter(age %in% c(80, 90)) %>% 
+  filter(
+    code %in% c("GBRTENW", "FRATNP", "DEUTE", "DEUTW", "JPN", "SWE", "USA")
+  ) %>%      
+  filter(between(year, 1950, 2003)) %>% 
+  ggplot(
+    aes(x = year, y = Mx, colour = code, group = code)
+  ) + 
+  geom_line() +
+  facet_grid(age ~ sex)
+
+```
+
+And how has this developed since?
+
+```{r}
+
+dta_Mx %>% 
+  filter(sex != "total") %>% 
+  filter(age %in% c(80, 90)) %>% 
+  filter(
+    code %in% c("GBRTENW", "FRATNP", "DEUTE", "DEUTW", "JPN", "SWE", "USA")
+  ) %>%      
+  filter(between(year, 1950, 2017)) %>% 
+  ggplot(
+    aes(x = year, y = Mx, colour = code, group = code)
+  ) + 
+  geom_line() +
+  facet_grid(age ~ sex)
+
+```
+
+It's interesting that life expectancies have at age 80 have converged, for males especially. 
+And that they've levelled off in Japan over the 2000s, while continued to improve in the USA. 
+
+In England/Wales they Mx at age 90 seem to have increased for females especially in recent years. 
+
+Let's look at this for the average of the 21 countries 
+
+Now let's do this for the average of the 21 high income countries 
+
+```{r}
+
+dta_Mx %>% 
+  filter(sex != "total") %>% 
+  filter(age %in% c(80, 90)) %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(between(year, 1950, 2016)) %>% 
+  group_by(year, age, sex) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = year, y = mean_Mx, colour = sex)) + 
+  facet_wrap(~age) +
+  geom_point()
+
+
+```
+
+Let's now use log rather than linear 
+
+```{r}
+dta_Mx %>% 
+  filter(sex != "total") %>% 
+  filter(age %in% c(80, 90)) %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(between(year, 1950, 2016)) %>% 
+  group_by(year, age, sex) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = year, y = mean_Mx, colour = sex)) + 
+  facet_wrap(~age) +
+  geom_point() +
+  scale_y_log10()
+
+
+```
+
+So, the trends on % reductions have been more continuous for age 90 than age 80, and more continuous for females than males. 
+
+Let's now do this for a couple of additional age groups 
+
+```{r}
+dta_Mx %>% 
+  filter(sex != "total") %>% 
+  filter(age %in% c(0, 30, 80, 90)) %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(between(year, 1950, 2016)) %>% 
+  group_by(year, age, sex) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = year, y = mean_Mx, colour = sex)) + 
+  facet_wrap(~age) +
+  geom_point() +
+  scale_y_log10()
+
+
+```
+
+Now let's estimate the correlation between these trends
+
+```{r}
+dta_trnd <- dta_Mx %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016))  %>% 
+  filter(age %in% c(0, 30, 80, 90)) %>% 
+  group_by(year, age) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(log_mean_Mx = log(mean_Mx, 10)) 
+
+dta_trnd %>% 
+  select(-mean_Mx) %>% 
+  mutate(age = paste0("age_", age)) %>% 
+  spread(age, log_mean_Mx) %>%
+  select(-year) %>% 
+  cor()
+
+```
+
+So, as expected, % improvements in infancy are more strongly correlated with those at age 80 and 90 than at age 30, and % changes at age 90 are less strongly correlated than with those at other ages. 
+
+Let's do this as a heatmap for all ages 
+
+```{r}
+dta_trnd <- dta_Mx %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016))  %>% 
+  filter(age <= 109) %>% 
+  group_by(year, age) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(log_mean_Mx = log(mean_Mx, 10)) 
+
+tmp <- dta_trnd %>% 
+  select(-mean_Mx) %>% 
+  spread(age, log_mean_Mx) %>%
+  select(-year) %>% 
+  cor() 
+
+cor_df <- tmp %>% 
+  as_tibble() %>% 
+  mutate(from_age = rownames(tmp)) %>% 
+  gather(key="to_age", value = "value", -from_age) %>% 
+  mutate(from_age = as.numeric(from_age), to_age = as.numeric(to_age))
+
+cor_df %>% 
+  filter(from_age <= 100, to_age <= 100) %>% 
+  ggplot(aes(x = from_age, y = to_age, fill = value)) + 
+  geom_tile() +
+  scale_fill_viridis_c() +
+  scale_x_continuous(breaks = seq(0, 100, by = 10)) +
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  coord_equal()
+
+```
+
+
+Definitely a 'wow' figure! 
+
+Interesting that the trends that apply at older ages don't apply at the oldeset ages (from around age 96 onwards)
