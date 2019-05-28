@@ -102,11 +102,17 @@ Mx_data <- tibble(
 ) %>% 
   mutate(
     Mx_df = map(code, readHMDweb, item = "Mx_1x1", username = my_username, password = my_password)
-  )
-  # ) %>% 
-  # unnest() %>% 
-  # gather(key = "sex", value = "e0", Female:Total) %>% 
-  # mutate(sex = tolower(sex)) %>% 
-  # rename(year = Year)
-  # 
+  ) %>% 
+  unnest() %>% 
+  select(-OpenInterval) %>% 
+  gather(key = "sex", value = "Mx", Female:Total) %>% 
+  mutate(sex = tolower(sex)) %>% 
+   rename(year = Year, age = Age)
+```
+
+Now write this 
+
+```{r}
+write_rds(Mx_data, "tidy_data/Mx_data.rds")
+
 ```
