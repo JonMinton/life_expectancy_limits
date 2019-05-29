@@ -15,6 +15,6 @@ all_distinct_countries <- c(
   "CZE", "DEUTE", "DEUTW", "DNK", "ESP", "EST", "FIN", "FRATNP", "GRC", "HUN",
   "IRL", "ISL", "ISR", "ITA", "JPN", "KOR", "LTU", "LUX", "LVA", "NLD", "NOR",
   "NZL_NP",
-  "POL", "PRT", "RUS", "SVK", "SN", "SWE", "TWN", "UKR", "GBR_NP", "USA"
+  "POL", "PRT", "RUS", "SVK", "SVN", "SWE", "TWN", "UKR", "GBR_NP", "USA"
 )
 
