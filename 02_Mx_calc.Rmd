@@ -216,4 +216,180 @@ cor_df %>%
 
 Definitely a 'wow' figure! 
 
-Interesting that the trends that apply at older ages don't apply at the oldeset ages (from around age 96 onwards)
+Interesting that the trends that apply at older ages don't apply at the oldest ages (from around age 96 onwards)
+
+Let's see how different it looks by gender.
+
+```{r}
+dta_trnd <- dta_Mx %>% 
+  filter(sex != "total") %>% 
+  filter(between(year, 1955, 2016))  %>% 
+  filter(age <= 109) %>% 
+  group_by(sex, year, age) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(log_mean_Mx = log(mean_Mx, 10)) %>% 
+  group_by(sex) %>% 
+  nest()
+
+
+cors_df <- dta_trnd %>% 
+  mutate(cors = map(
+    data, 
+    function(X) {
+      X %>% 
+        select(-mean_Mx) %>% 
+        spread(age, log_mean_Mx) %>% 
+        select(-year) %>% 
+        cor()
+      }
+    )
+  ) %>% 
+  mutate(cor_df = map(
+    cors,
+    function(X){
+      X %>% 
+        as_tibble() %>% 
+        mutate(from_age = rownames(X)) %>% 
+        gather(key = "to_age", value = "value", -from_age) %>% 
+        mutate(from_age = as.numeric(from_age), to_age = as.numeric(to_age))
+      }
+    )
+  ) %>% 
+  select(sex, cor_df) %>% 
+  unnest()
+
+
+cors_df %>% 
+  filter(from_age <= 100, to_age <= 100) %>% 
+  ggplot(aes(x = from_age, y = to_age, fill = value)) + 
+  geom_tile() +
+  scale_fill_viridis_c() +
+  scale_x_continuous(breaks = seq(0, 100, by = 10)) +
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  coord_equal() + 
+  facet_wrap(~sex)
+
+```
+
+Again, beautiful, staggering, and awesome. This is like seeing the genome of population health improvement being mapped. The gender differences in the differences in correlation are very apparent. 
+
+Let's extend this to a few few select countries: 
+
+* France
+* Sweden?
+* UK
+* USA 
+* Spain (Identified as most compatible with Lee-Carter modelling approach)
+* Japan
+
+
+```{r}
+dta_trnd <- dta_Mx %>% 
+  filter(sex != "total") %>%
+  filter(code %in% c("FRATNP", "SWE", "GBR_NP", "USA", "ESP", "JPN")) %>% 
+  filter(between(year, 1955, 2016))  %>% 
+  filter(age <= 109) %>% 
+  group_by(code, sex, year, age) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(log_mean_Mx = log(mean_Mx + 0.00001, 10)) %>% # Correction for Sweden
+  group_by(sex, code) %>% 
+  nest()
+
+
+cors_df <- dta_trnd %>% 
+  mutate(cors = map(
+    data, 
+    function(X) {
+      X %>% 
+        select(-mean_Mx) %>% 
+        spread(age, log_mean_Mx) %>% 
+        select(-year) %>% 
+        cor()
+      }
+    )
+  ) %>% 
+  mutate(cor_df = map(
+    cors,
+    function(X){
+      X %>% 
+        as_tibble() %>% 
+        mutate(from_age = rownames(X)) %>% 
+        gather(key = "to_age", value = "value", -from_age) %>% 
+        mutate(from_age = as.numeric(from_age), to_age = as.numeric(to_age))
+      }
+    )
+  ) %>% 
+  select(sex, code, cor_df) %>% 
+  unnest()
+
+
+cors_df %>% 
+  filter(from_age <= 100, to_age <= 100) %>% 
+  ggplot(aes(x = from_age, y = to_age, fill = value)) + 
+  geom_tile() +
+  scale_fill_viridis_c() +
+  scale_x_continuous(breaks = seq(0, 100, by = 10)) +
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  coord_equal() + 
+  facet_grid(code ~sex)
+
+```
+
+
+Let's do this just for the UK nations 
+
+```{r}
+dta_trnd <- dta_Mx %>% 
+  filter(sex != "total") %>%
+  filter(code %in% c("GBRTENW", "GBR_SCO", "GBR_NIR")) %>% 
+  filter(between(year, 1955, 2016))  %>% 
+  filter(age <= 109) %>% 
+  group_by(code, sex, year, age) %>% 
+  summarise(mean_Mx = mean(Mx, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(log_mean_Mx = log(mean_Mx + 0.00001, 10)) %>% # Correction for Sweden
+  group_by(sex, code) %>% 
+  nest()
+
+
+cors_df <- dta_trnd %>% 
+  mutate(cors = map(
+    data, 
+    function(X) {
+      X %>% 
+        select(-mean_Mx) %>% 
+        spread(age, log_mean_Mx) %>% 
+        select(-year) %>% 
+        cor()
+      }
+    )
+  ) %>% 
+  mutate(cor_df = map(
+    cors,
+    function(X){
+      X %>% 
+        as_tibble() %>% 
+        mutate(from_age = rownames(X)) %>% 
+        gather(key = "to_age", value = "value", -from_age) %>% 
+        mutate(from_age = as.numeric(from_age), to_age = as.numeric(to_age))
+      }
+    )
+  ) %>% 
+  select(sex, code, cor_df) %>% 
+  unnest()
+
+
+cors_df %>% 
+  filter(from_age <= 100, to_age <= 100) %>% 
+  ggplot(aes(x = from_age, y = to_age, fill = value)) + 
+  geom_tile() +
+  scale_fill_viridis_c() +
+  scale_x_continuous(breaks = seq(0, 100, by = 10)) +
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  coord_equal() + 
+  facet_grid(code ~sex)
+
+
+```
