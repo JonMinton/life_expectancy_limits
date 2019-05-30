@@ -86,7 +86,14 @@ fig_01_dta <- dta_e0 %>%
 fig_01_dta %>% 
   ggplot(aes(x = year, y = mean_e0)) +
   geom_point() +
-  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years", 
+    title = "Mean life expectancy of 21 high income countries from 1955 to 1996",
+    subtitle = "Dashed line is linear regression trend line",
+    caption = "Unweighted average of 21 countries used in White (2002), replication of figure 1"
+  )
 ```
 
 And what's the average improvement per year?
@@ -116,7 +123,14 @@ tmp %>%
   ggplot(aes(x = year, y = mean_e0)) +
   geom_point() +
   stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
-  geom_vline(xintercept = 1996)
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years", 
+    title = "Mean life expectancy of 21 high income countries from 1955 to 2016",
+    subtitle = "Dashed line is linear regression trend line",
+    caption = "Unweighted average of 21 countries used in White (2002), replication and updating of figure 1"
+  )
+  
 ```
 
 The near perfect linearlity has continued beyond 1996. 
@@ -194,7 +208,6 @@ tmp %>%
   ggplot(aes(x = year, y = mean_e0)) +
   geom_point() +
   stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
-  geom_vline(xintercept = 1996) +
   geom_point(
     aes(x = year, y = e0),
     inherit.aes = F, 
@@ -203,6 +216,14 @@ tmp %>%
       filter(code == "GBR_NP") %>% 
       filter(between(year, 1955, 2016)) ,
     colour = "red", shape = 2
+  ) + 
+  labs(
+    x = "Year", 
+    y = "Life expectancy",
+    title = "Life expectancy over time  for average of high income countries (black) and the UK (red)",
+    subtitle = "The UK fell below the average in the 1960s, started to converge in the 2000s, then fell back after 2012",
+    caption = "Black line is unweighted average of 21 countries from White 2002. Source: HMD"
+    
   )
 
 ```
@@ -320,11 +341,16 @@ tmp %>%
     data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
     nudge_y = - 0.5
   ) + 
-  
   stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "darkgreen", linetype = "dashed") +
   stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
   stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
-  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "blue", linetype = "dashed") 
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "blue", linetype = "dashed") +
+  labs(
+    x = "Year", y = "Life expectancy in years",
+    title = "Life expectancy trends for best performing, worst performing, average high income, and UK, 1955-2016",
+    subtitle = "Best performing: Green; Worst performing: Red; Average: Black; UK: Blue",
+    caption = "Unweighted average of 21 high income countries in White 2002. Linear trends as dashed lines"
+  )
 
 ```
 
@@ -982,7 +1008,12 @@ tmp %>%
               filter(code %in% c("USA", "GBR_NP"))
             ) +
   geom_hline(yintercept = 0) +
-  geom_vline(xintercept = 1996)
+  labs(
+    x = "Year", y = "Difference in life expectancy from high-income average",
+    title = "Difference in life expectancy from high-income average over time", 
+    subtitle = "UK (red) and USA (blue) highlighted", 
+    caption = "Difference from unweighted verage of 21 high income countries used in White (2002)."
+  )
 
 
 ```

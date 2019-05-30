@@ -333,7 +333,7 @@ cors_df %>%
   scale_x_continuous(breaks = seq(0, 100, by = 10)) +
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
   coord_equal() + 
-  facet_grid(code ~sex)
+  facet_grid(sex ~ code)
 
 ```
 
@@ -389,7 +389,7 @@ cors_df %>%
   scale_x_continuous(breaks = seq(0, 100, by = 10)) +
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
   coord_equal() + 
-  facet_grid(code ~sex)
+  facet_grid(sex ~code)
 
 
 ```
