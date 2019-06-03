@@ -37,7 +37,7 @@ The aim will be to determine how strongly the (log of these) trends are correlat
 ```{r}
 pacman::p_load(
   tidyverse, HMDHFDplus,
-  ggrepel
+  ggrepel, plotly
 )
 
 dta_Mx <- read_rds("tidy_data/Mx_data.rds")
