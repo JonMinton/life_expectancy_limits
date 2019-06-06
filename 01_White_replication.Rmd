@@ -221,7 +221,7 @@ tmp %>%
       filter(sex == "total") %>% 
       filter(code == "GBR_NP") %>% 
       filter(between(year, 1955, 2016)) ,
-    colour = "red", shape = 2
+    colour = "darkred", shape = 2
   ) + 
   labs(
     x = "Year", 
@@ -341,7 +341,7 @@ tmp %>%
   ) + 
   geom_point(aes(y = mean_e0)) +
   geom_point(aes(y = min_e0), colour = "red") +
-  geom_point(aes(y = uk_e0), colour = "blue") +
+  geom_point(aes(y = uk_e0), colour = "darkred", shape = 2) +
   geom_text(
     aes(x = year, y = min_e0, label = which_code_min), 
     inherit.aes = F,
@@ -352,11 +352,11 @@ tmp %>%
   stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "darkgreen", linetype = "dashed") +
   stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
   stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
-  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "blue", linetype = "dashed") +
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "darkred", linetype = "dashed") +
   labs(
     x = "Year", y = "Life expectancy in years",
     title = "Life expectancy trends for best performing, worst performing, average high income, and UK, 1955-2016",
-    subtitle = "Best performing: Green; Worst performing: Red; Average: Black; UK: Blue",
+    subtitle = "Best performing: Green; Worst performing: Red; Average: Black; UK: Dark Red",
     caption = "Unweighted average of 21 high income countries in White 2002. Linear trends as dashed lines"
   )
 
@@ -407,9 +407,12 @@ fig_02_dta %>%
        title = "Average annual change in life expectancy over time, 1955-1996",
        caption = "Unweighted average (mean) of 21 high income countries used in White 2002")
 
+
 ```
 
 And how about subsequent to this?
+
+Without bars, then with bars
 
 ```{r}
 tmp <- dta_e0 %>% 
@@ -422,10 +425,20 @@ tmp <- dta_e0 %>%
   arrange(year) %>% 
   mutate(ch_e0 = mean_e0 - lag(mean_e0)) 
   
-tmp %>% 
+fig_ch <- tmp %>% 
   ggplot(aes(x = year, y = ch_e0)) + 
   geom_point() + geom_line() +
-  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE)), size = 1.5, linetype = "dashed") + 
+  geom_hline(yintercept = 0) + 
+  labs(x = "Year", y = "Annual change in life expectancy", 
+       title = "Average annual change in life expectancy over time, 1955-2016",
+       caption = "Unweighted average (mean) of 21 high income countries used in White 2002")
+
+print(fig_ch)
+
+ggsave("figures/supp_avg_ch_e0.png", height = 12, width = 29, units = "cm", dpi = 300)
+
+fig_ch +
+    geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE)), size = 1.5, linetype = "dashed") + 
   annotate(geom = "rect",
       xmin = -Inf, xmax = Inf,           
       ymin = mean(tmp$ch_e0, na.rm = TRUE) - 0.5 * sd(tmp$ch_e0, na.rm = TRUE),
@@ -450,14 +463,9 @@ tmp %>%
       ymax = mean(tmp$ch_e0, na.rm = TRUE) + 2.0 * sd(tmp$ch_e0, na.rm = TRUE),
     alpha = 0.1, fill = "blue"
   ) + 
-
   geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) - 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
   geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) + 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
 
-  geom_hline(yintercept = 0) + 
-  labs(x = "Year", y = "Annual change in life expectancy", 
-       title = "Average annual change in life expectancy over time, 1955-2016",
-       caption = "Unweighted average (mean) of 21 high income countries used in White 2002")
 
 ggsave("figures/supp_avg_ch_e0_bars.png", height = 12, width = 29, units = "cm", dpi = 300)
 
@@ -509,6 +517,34 @@ tmp %>%
   )
 
 ggsave("figures/supp_avg_ch_e0_cf_uk.png", height = 12, width = 29, units = "cm", dpi = 300)
+
+```
+
+UK, no bars
+
+```{r}
+
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>%
+  filter(code %in% "GBR_NP") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0)) 
+  
+tmp %>% 
+  ggplot(aes(x = year, y = ch_e0)) + 
+  geom_point() + geom_line() +
+
+
+  geom_hline(yintercept = 0) + 
+  labs(x = "Year", y = "Annual change in life expectancy", 
+       title = "Annual change in life expectancy over time, UK, 1955-2016")
+
+ggsave("figures/supp_uk_ch_e0.png", height = 12, width = 29, units = "cm", dpi = 300)
+
 
 ```
 
