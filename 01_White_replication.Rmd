@@ -604,6 +604,65 @@ ggsave("figures/supp_uk_ch_e0_bars.png", height = 12, width = 29, units = "cm", 
 
 ```
 
+
+And the USA
+
+
+
+```{r}
+
+
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>%
+  filter(code %in% "USA") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0)) 
+  
+tmp %>% 
+  ggplot(aes(x = year, y = ch_e0)) + 
+  geom_point() + geom_line() +
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE)), size = 1.5, linetype = "dashed") + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 0.5 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 0.5 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 1.0 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 1.0 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 1.5 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 1.5 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 2.0 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 2.0 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) - 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) + 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
+
+  geom_hline(yintercept = 0) + 
+  labs(x = "Year", y = "Annual change in life expectancy", 
+       title = "Annual change in life expectancy over time, USA, 1955-2016")
+
+ggsave("figures/supp_usa_ch_e0_bars.png", height = 12, width = 29, units = "cm", dpi = 300)
+
+```
+
+
 And now what about Scotland?
 
 ```{r}
