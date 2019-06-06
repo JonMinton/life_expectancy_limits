@@ -94,6 +94,9 @@ fig_01_dta %>%
     subtitle = "Dashed line is linear regression trend line",
     caption = "Unweighted average of 21 countries used in White (2002), replication of figure 1"
   )
+
+ggsave("figures/pt1_white_orig.png", height = 12, width = 20, units = "cm", dpi = 300)
+
 ```
 
 And what's the average improvement per year?
@@ -130,6 +133,9 @@ tmp %>%
     subtitle = "Dashed line is linear regression trend line",
     caption = "Unweighted average of 21 countries used in White (2002), replication and updating of figure 1"
   )
+
+ggsave("figures/pt1_white_update.png", height = 12, width = 20, units = "cm", dpi = 300)
+
   
 ```
 
@@ -225,6 +231,8 @@ tmp %>%
     caption = "Black line is unweighted average of 21 countries from White 2002. Source: HMD"
     
   )
+ggsave("figures/pt1_white_update_uk.png", height = 12, width = 20, units = "cm", dpi = 300)
+
 
 ```
 
@@ -352,6 +360,8 @@ tmp %>%
     caption = "Unweighted average of 21 high income countries in White 2002. Linear trends as dashed lines"
   )
 
+ggsave("figures/pt1_sandwich.png", height = 12, width = 20, units = "cm", dpi = 300)
+
 ```
 
 In the figure above, the red dots show the worst performing of the 21 high income countries, the green dots that for the best performing country. The black dots show the average (mean) for these countries, and the blue dots show the life expectancies for the UK. Every five years, the best and worst performing country is labelled. 
@@ -415,10 +425,41 @@ tmp <- dta_e0 %>%
 tmp %>% 
   ggplot(aes(x = year, y = ch_e0)) + 
   geom_point() + geom_line() +
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE)), size = 1.5, linetype = "dashed") + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 0.5 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 0.5 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 1.0 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 1.0 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 1.5 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 1.5 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 2.0 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 2.0 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) - 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) + 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
+
   geom_hline(yintercept = 0) + 
   labs(x = "Year", y = "Annual change in life expectancy", 
        title = "Average annual change in life expectancy over time, 1955-2016",
        caption = "Unweighted average (mean) of 21 high income countries used in White 2002")
+
+ggsave("figures/supp_avg_ch_e0_bars.png", height = 12, width = 29, units = "cm", dpi = 300)
 
 ```
 
@@ -467,7 +508,63 @@ tmp %>%
     caption = "Unweighted average (mean) of 21 countries from White 2002"
   )
 
+ggsave("figures/supp_avg_ch_e0_cf_uk.png", height = 12, width = 29, units = "cm", dpi = 300)
 
+```
+
+
+Bars for UK
+
+```{r}
+
+
+tmp <- dta_e0 %>% 
+  filter(sex == "total") %>%
+  filter(code %in% "GBR_NP") %>% 
+  filter(between(year, 1954, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = mean_e0 - lag(mean_e0)) 
+  
+tmp %>% 
+  ggplot(aes(x = year, y = ch_e0)) + 
+  geom_point() + geom_line() +
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE)), size = 1.5, linetype = "dashed") + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 0.5 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 0.5 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 1.0 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 1.0 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 1.5 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 1.5 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+  annotate(geom = "rect",
+      xmin = -Inf, xmax = Inf,           
+      ymin = mean(tmp$ch_e0, na.rm = TRUE) - 2.0 * sd(tmp$ch_e0, na.rm = TRUE),
+      ymax = mean(tmp$ch_e0, na.rm = TRUE) + 2.0 * sd(tmp$ch_e0, na.rm = TRUE),
+    alpha = 0.1, fill = "blue"
+  ) + 
+
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) - 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
+  geom_hline(aes(yintercept = mean(ch_e0, na.rm = TRUE) + 1.96 * sd(ch_e0, na.rm = TRUE)), linetype = "dashed") + 
+
+  geom_hline(yintercept = 0) + 
+  labs(x = "Year", y = "Annual change in life expectancy", 
+       title = "Annual change in life expectancy over time, UK, 1955-2016")
+
+ggsave("figures/supp_uk_ch_e0_bars.png", height = 12, width = 29, units = "cm", dpi = 300)
 
 ```
 
@@ -514,6 +611,8 @@ tmp %>%
     x = "Year", y = "Annual change in life expectancy", 
     caption = "Unweighted average (mean) of 21 countries from White 2002"
   )
+
+ggsave("figures/supp_avg_ch_e0_cf_scot.png", height = 12, width = 29, units = "cm", dpi = 300)
 
 
 
@@ -633,7 +732,7 @@ dta_for_fig03 <- dta_e0 %>%
   ungroup() %>% 
   select(code, val_in_1955, mean_ch_e0) 
 
-dta_for_fig03 %>% 
+fig03 <- dta_for_fig03 %>% 
   ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
   geom_point() + 
   scale_y_continuous(limits = c(0, 0.4)) + 
@@ -644,6 +743,18 @@ dta_for_fig03 %>%
     y = "Average annual change in life expectancy",
     caption = "Replication of figure 3 from White (2002)"
     )  
+
+print(fig03)
+
+ggsave("figures/pt2_white_orig.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+fig03 + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed",
+              data = dta_for_fig03 %>% filter(code != "PRT")) + 
+  geom_smooth(se = F, colour = "blue",
+              data = dta_for_fig03 %>% filter(code != "PRT"))
+
+ggsave("figures/pt2_white_orig_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 
 
@@ -697,7 +808,7 @@ tmp <- dta_e0 %>%
   ungroup() %>% 
   select(code, val_in_1955, mean_ch_e0) 
 
-tmp %>% 
+fig03_update <- tmp %>% 
   ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
   geom_point() + 
   scale_y_continuous(limits = c(0, 0.4)) + 
@@ -708,6 +819,18 @@ tmp %>%
     x = "Life expectancy in 1955 (years)", y = "Average annual change in life expectancy",
     caption = "Updating of figure 3 from White (2002) to include data up to 2016"
     )  
+
+print(fig03_update)
+
+ggsave("figures/pt2_white_update.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+fig03_update + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
+  geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
+
+ggsave("figures/pt2_white_update_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
 
 
 ```
@@ -742,6 +865,9 @@ tmp %>%
     x = "Life expectancy in 2010 (years)", y = "Average annual change in life expectancy"
     )  
 
+ggsave("figures/pt1_supp_white_2010plus.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
 
 ```
 
@@ -754,8 +880,8 @@ tmp <- dta_e0 %>%
   filter(code %in% high_income_countries) %>% 
   filter(sex == "total") %>% 
   filter(between(year, 1955, 2015)) %>% 
-  mutate(decade = cut(year, seq(1955, 2015, by = 10), include.lowest = T)) %>% 
-  group_by(code, decade) %>% 
+  mutate(Decade = cut(year, seq(1955, 2015, by = 10), include.lowest = T)) %>% 
+  group_by(code, Decade) %>% 
   arrange(year) %>% 
   mutate(ch_e0 = e0 - lag(e0)) %>% 
   mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
@@ -765,11 +891,11 @@ tmp2 <- tmp %>% filter(code == "GBR_NP")
 
 tmp %>% 
   ggplot(
-    aes(x = e0, y = mean_ch_e0, group = decade, colour = decade, shape = decade)
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade)
     ) + 
   geom_point() + 
   geom_point(
-    aes(x = e0, y = mean_ch_e0, group = decade, colour = decade, shape = decade),
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade),
     inherit.aes = FALSE, 
     data = tmp2,
     shape = 19, size = 5, alpha = 0.25
@@ -782,6 +908,9 @@ tmp %>%
     y = "Average annual change in life expectancy over decade",
     caption = "Based on figure 3 of White (2002)"
   )
+
+ggsave("figures/pt1_white_sliced.png", height = 12, width = 20, units = "cm", dpi = 300)
+
 
 ```
 This figure shows that the degree to which the limits-to-growth argument holds in high income countries is falling, rather than increasing, again suggesting it is not an important factor in explaining the recent slowdown in the UK (highlighted with a translucent symbol). 
@@ -1002,10 +1131,14 @@ tmp <- dta_e0 %>%
 tmp %>% 
   ggplot(aes(x = year, y = diff_from_mean, group = code)) + 
   geom_line(alpha = 0.6) +
-  geom_line(aes(x = year, y = diff_from_mean, group = code, colour = code), 
+  geom_line(aes(x = year, y = diff_from_mean, group = Country, colour = Country), 
             inherit.aes = F, size = 1.5, 
             data = tmp %>% 
-              filter(code %in% c("USA", "GBR_NP"))
+              filter(code %in% c("USA", "GBR_NP")) %>% 
+              mutate(Country = case_when(
+                code == "USA" ~ "USA",
+                code == "GBR_NP" ~ "UK"
+              ))
             ) +
   geom_hline(yintercept = 0) +
   labs(
@@ -1014,6 +1147,7 @@ tmp %>%
     subtitle = "UK (red) and USA (blue) highlighted", 
     caption = "Difference from unweighted verage of 21 high income countries used in White (2002)."
   )
+
 
 
 ```
