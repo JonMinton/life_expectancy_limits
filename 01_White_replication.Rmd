@@ -878,7 +878,7 @@ dta_e0 %>%
   scale_y_continuous(limits = c(0, 0.4)) + 
   ggrepel::geom_text_repel(aes(label = code)) +
   labs(
-    title = "Life expectancy in 1955 against change in life expectancy", 
+    title = "Life expectancy in 1955 against change in life expectancy (up to 1996)", 
     subtitle = "All countries in HMD with life expectancies recorded in 1955", 
     x = "Life expectancy in 1955 (years)", 
     y = "Average annual change in life expectancy",
@@ -1133,7 +1133,7 @@ To do or not bother. I think we have what we need for a short paper.
 
 ## Figure 4
 
-Variance tween life expectancies for 21 high-income countries, 1955-96
+Variance between life expectancies for 21 high-income countries, 1955-96
 
 ```{r}
 dta_e0 %>% 
@@ -1281,6 +1281,176 @@ This also seems to be an important paper, as it shows how both the UK and the US
 
 
 ## Figure 5
+
+...
+
+#New figures requested by Rebecca 
+
+## High income countries, side by side, original and updated period, linear regression line 
+
+```{r}
+dta_for_fighi_upto1996 <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 1996)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) 
+
+fig_hi_upto1996 <- dta_for_fighi_upto1996 %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    title = "Life expectancy against change in life expectancy from 1955 to 1996",
+    subtitle = "Linear regression line on all countries except Portugal (PRT)",
+    x = "Life expectancy in 1955 (years)", 
+    y = "Average annual change in life expectancy",
+    caption = "Replication of figure 3 from White (2002)"
+    ) + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed",
+              data = dta_for_fig03 %>% filter(code != "PRT")) 
+
+print(fig_hi_upto1996)
+
+dta_for_fighi_upto2016 <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) 
+
+fig_hi_upto2016 <- dta_for_fighi_upto2016 %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    title = "Life expectancy against change in life expectancy from 1955 to 2016",
+    subtitle = "Linear regression line on all countries except Portugal (PRT)",
+    x = "Life expectancy in 1955 (years)", 
+    y = "Average annual change in life expectancy",
+    caption = "Replication of figure 3 from White (2002)"
+    ) + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed",
+              data = dta_for_fig03 %>% filter(code != "PRT")) 
+
+print(fig_hi_upto2016)
+
+
+png(filename = "figures/2x1_hi_e0_che0.png", width = 35, height = 15, res = 300, units = "cm") 
+gridExtra::grid.arrange(fig_hi_upto1996, fig_hi_upto2016, nrow = 1)
+dev.off()
+
+```
+
+
+## All HMD countries, side by side, original and updated period, linear regression line 
+
+```{r}
+dta_for_figall_upto1996 <- dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 1996)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) 
+
+fig_all_upto1996 <- dta_for_figall_upto1996 %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    title = "Life expectancy against change in life expectancy from 1955 to 1996",
+    subtitle = "Linear regression line on all countries except Portugal (PRT)",
+    x = "Life expectancy in 1955 (years)", 
+    y = "Average annual change in life expectancy",
+    caption = "Replication of figure 3 from White (2002) with all HMD countries"
+    ) + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed",
+              data = dta_for_fig03 %>% filter(code != "PRT")) 
+
+print(fig_all_upto1996)
+
+dta_for_figall_upto2016 <- dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) 
+
+fig_all_upto2016 <- dta_for_figall_upto2016 %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    title = "Life expectancy against change in life expectancy from 1955 to 2016",
+    subtitle = "Linear regression line on all countries except Portugal (PRT)",
+    x = "Life expectancy in 1955 (years)", 
+    y = "Average annual change in life expectancy",
+    caption = "Replication of figure 3 from White (2002) with all HMD countries"
+    ) + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed",
+              data = dta_for_fig03 %>% filter(code != "PRT")) 
+
+print(fig_all_upto2016)
+
+
+png(filename = "figures/2x1_all_e0_che0.png", width = 35, height = 15, res = 300, units = "cm") 
+gridExtra::grid.arrange(fig_all_upto1996, fig_all_upto2016, nrow = 1)
+dev.off()
+
+```
+
+## Table of High income countries, ranking by decadal period
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  mutate(Decade = cut(year, seq(1955, 2015, by = 10), include.lowest = T)) %>% 
+  group_by(code, Decade) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year))
+
+lookup_table <- read_csv("https://raw.githubusercontent.com/JonMinton/hmd_explorer/master/hmd_explorer/data/country_codes_lookup.csv")
+
+tmp %>% 
+  left_join(lookup_table, by = c("code"= "code")) %>% 
+  select(country = name, Decade, e0) %>% 
+  group_by(Decade) %>% 
+  mutate(Rank = rank(desc(e0))) %>% 
+  write_csv(path = "tables/e0_tables.csv")
+
+```
 
 
 

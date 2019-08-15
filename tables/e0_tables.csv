@@ -1,0 +1,125 @@
+code,country,Decade,e0,Rank
+AUS,Australia,"[1955,1965]",70.15,6
+AUT,Austria,"[1955,1965]",67.55,16
+BEL,Belgium,"[1955,1965]",68.54,11
+CAN,Canada,"[1955,1965]",70,9
+CHE,Switzerland,"[1955,1965]",70.07,8
+DNK,Denmark,"[1955,1965]",71.92,4
+ESP,Spain,"[1955,1965]",66.73,18
+FIN,Finland,"[1955,1965]",67.34,17
+FRATNP,France (Total),"[1955,1965]",68.44,13
+IRL,Ireland,"[1955,1965]",68,15
+ITA,Italy,"[1955,1965]",68.25,14
+JPN,Japan,"[1955,1965]",65.7,19
+NLD,Netherlands,"[1955,1965]",72.5,3
+NOR,Norway,"[1955,1965]",73.43,1
+NZL_NP,New Zealand,"[1955,1965]",70.48,5
+PRT,Portugal,"[1955,1965]",61.4,20
+SWE,Sweden,"[1955,1965]",72.59,2
+GBR_NP,United Kingdom,"[1955,1965]",70.13,7
+USA,United States,"[1955,1965]",69.56,10
+DEUTW,West Germany,"[1955,1965]",68.49,12
+AUS,Australia,"(1965,1975]",70.68,13
+AUT,Austria,"(1965,1975]",70.22,16
+BEL,Belgium,"(1965,1975]",70.63,15
+CAN,Canada,"(1965,1975]",71.87,6
+CHE,Switzerland,"(1965,1975]",72.45,5
+DEUTW,West Germany,"(1965,1975]",70.66,14
+DNK,Denmark,"(1965,1975]",72.47,4
+ESP,Spain,"(1965,1975]",71.18,9
+FIN,Finland,"(1965,1975]",69.64,19
+FRATNP,France (Total),"(1965,1975]",71.51,7
+IRL,Ireland,"(1965,1975]",70.15,18
+ITA,Italy,"(1965,1975]",71,12
+JPN,Japan,"(1965,1975]",71.03,11
+NLD,Netherlands,"(1965,1975]",73.55,3
+NOR,Norway,"(1965,1975]",74.01,2
+NZL_NP,New Zealand,"(1965,1975]",71.07,10
+PRT,Portugal,"(1965,1975]",65.6,20
+SWE,Sweden,"(1965,1975]",74.1,1
+GBR_NP,United Kingdom,"(1965,1975]",71.44,8
+USA,United States,"(1965,1975]",70.21,17
+AUS,Australia,"(1975,1985]",72.79,13
+AUT,Austria,"(1975,1985]",71.79,20
+BEL,Belgium,"(1975,1985]",72.1,16
+CAN,Canada,"(1975,1985]",73.87,7
+CHE,Switzerland,"(1975,1985]",74.91,4
+DEUTW,West Germany,"(1975,1985]",72.02,17
+DNK,Denmark,"(1975,1985]",73.77,9
+ESP,Spain,"(1975,1985]",73.81,8
+FIN,Finland,"(1975,1985]",71.99,18
+FRATNP,France (Total),"(1975,1985]",73.12,10
+IRL,Ireland,"(1975,1985]",71.8,19
+ITA,Italy,"(1975,1985]",73.07,11
+JPN,Japan,"(1975,1985]",74.76,5
+NLD,Netherlands,"(1975,1985]",74.67,6
+NOR,Norway,"(1975,1985]",75.05,2
+NZL_NP,New Zealand,"(1975,1985]",72.4,15
+PRT,Portugal,"(1975,1985]",69.1,21
+SWE,Sweden,"(1975,1985]",74.97,3
+GBR_NP,United Kingdom,"(1975,1985]",72.64,14
+USA,United States,"(1975,1985]",72.85,12
+GRC,NA,"(1975,1985]",75.73,1
+AUS,Australia,"(1985,1995]",76.07,9
+AUT,Austria,"(1985,1995]",74.46,18
+BEL,Belgium,"(1985,1995]",74.67,16
+CAN,Canada,"(1985,1995]",76.49,5
+CHE,Switzerland,"(1985,1995]",77.04,2
+DEUTW,West Germany,"(1985,1995]",75.25,12
+DNK,Denmark,"(1985,1995]",74.64,17
+ESP,Spain,"(1985,1995]",76.7,4
+FIN,Finland,"(1985,1995]",74.77,14
+FRATNP,France (Total),"(1985,1995]",75.58,11
+GRC,NA,"(1985,1995]",76.39,6
+IRL,Ireland,"(1985,1995]",73.61,21
+ITA,Italy,"(1985,1995]",75.91,10
+JPN,Japan,"(1985,1995]",78.22,1
+NLD,Netherlands,"(1985,1995]",76.35,7
+NOR,Norway,"(1985,1995]",76.26,8
+NZL_NP,New Zealand,"(1985,1995]",74.12,19
+PRT,Portugal,"(1985,1995]",73.64,20
+SWE,Sweden,"(1985,1995]",76.95,3
+GBR_NP,United Kingdom,"(1985,1995]",74.8,13
+USA,United States,"(1985,1995]",74.74,15
+AUS,Australia,"(1995,2005]",78.35,5
+AUT,Austria,"(1995,2005]",77.03,14
+BEL,Belgium,"(1995,2005]",77.19,12
+CAN,Canada,"(1995,2005]",78.27,7
+CHE,Switzerland,"(1995,2005]",79.05,2
+DEUTW,West Germany,"(1995,2005]",77.11,13
+DNK,Denmark,"(1995,2005]",75.66,20
+ESP,Spain,"(1995,2005]",78.34,6
+FIN,Finland,"(1995,2005]",76.87,16
+FRATNP,France (Total),"(1995,2005]",78.06,9
+GRC,NA,"(1995,2005]",77.8,10
+IRL,Ireland,"(1995,2005]",75.86,19
+ITA,Italy,"(1995,2005]",78.43,4
+JPN,Japan,"(1995,2005]",80.37,1
+NLD,Netherlands,"(1995,2005]",77.55,11
+NOR,Norway,"(1995,2005]",78.23,8
+NZL_NP,New Zealand,"(1995,2005]",76.81,17
+PRT,Portugal,"(1995,2005]",75.47,21
+SWE,Sweden,"(1995,2005]",79.04,3
+GBR_NP,United Kingdom,"(1995,2005]",76.88,15
+USA,United States,"(1995,2005]",76.2,18
+AUS,Australia,"(2005,2015]",81.3,4
+AUT,Austria,"(2005,2015]",79.97,11
+BEL,Belgium,"(2005,2015]",79.39,15
+CAN,Canada,"(2005,2015]",80.56,8
+CHE,Switzerland,"(2005,2015]",81.55,2
+DEUTW,West Germany,"(2005,2015]",79.73,14
+DNK,Denmark,"(2005,2015]",78.22,20
+ESP,Spain,"(2005,2015]",80.98,5
+FIN,Finland,"(2005,2015]",79.37,16
+FRATNP,France (Total),"(2005,2015]",80.74,7
+GRC,NA,"(2005,2015]",79.89,12
+IRL,Ireland,"(2005,2015]",79.17,18
+ITA,Italy,"(2005,2015]",81.42,3
+JPN,Japan,"(2005,2015]",82.42,1
+NLD,Netherlands,"(2005,2015]",79.84,13
+NOR,Norway,"(2005,2015]",80.44,9
+NZL_NP,New Zealand,"(2005,2015]",80.05,10
+PRT,Portugal,"(2005,2015]",79.01,19
+SWE,Sweden,"(2005,2015]",80.83,6
+GBR_NP,United Kingdom,"(2005,2015]",79.36,17
+USA,United States,"(2005,2015]",77.88,21
