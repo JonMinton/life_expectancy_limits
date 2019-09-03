@@ -135,11 +135,13 @@ tmp %>%
   )
 
 ggsave("figures/pt1_white_update.png", height = 12, width = 20, units = "cm", dpi = 300)
-
+ggsave("figures/e0_limits/fig_1_a_all_highincome.png", height = 12, width = 20, units = "cm", dpi = 300)
   
 ```
 
 The near perfect linearlity has continued beyond 1996. 
+
+
 
 What does this look like for the earlier and later period? 
 
@@ -198,6 +200,100 @@ So, there is no evidence in slowdown of the trend for the mean of high income co
 
 By subtracting the minimum year in each decade, the intercepts now show the life expectancy at the start of the period, and so are more meaningful. This increased from 69 in 1955 to 80 in 2005. 
 
+As above, all countries
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() 
+
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years", 
+    title = "Mean life expectancy of all HMD countries from 1955 to 2016",
+    subtitle = "Dashed line is linear regression trend line",
+    caption = "Unweighted average of all available countries, replication and updating of figure 1"
+  )
+
+ggsave("figures/e0_limits/appendix/fig_1_a_all_hmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+  
+```
+
+The fit is clearly less linear over time. This is likely due to changing composition of the countries over time, perhaps due to many Eastern European countries appearing post 1990ish, pulling the average down, but then increasing quickly thereafter. 
+
+Again, what's the $R^2$ overall and by decade?
+
+```{r}
+tmp %>% 
+  lm(mean_e0 ~ year, data = .) %>% 
+  summary()
+```
+
+Now the $R^2$ is 'only' around 0.98. 
+
+What does this look like for the earlier and later period? 
+
+```{r}
+
+tmp %>% 
+  lm(mean_e0 ~ year, .) %>% 
+  summary()
+
+tmp %>% 
+  filter(year < 1993) %>% 
+  lm(mean_e0 ~ year, .) %>% 
+  summary()
+
+tmp %>% 
+  filter(year >= 1993) %>% 
+  lm(mean_e0 ~ year, .) %>% 
+  summary()
+
+
+
+```
+
+Since 1993, the improvement for all available countries has been almost perfect ($R^2$ > 0.99), with an average improvement of around 0.255 years/year.  This is a general phemomena, not confined to historically rich nations.
+
+And again, by decade
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>%
+  mutate(decade = cut(year, seq(1955, 2015, by = 10), include.lowest = TRUE)) %>% 
+  group_by(year, decade) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  group_by(decade) %>% 
+  nest() %>% 
+  filter(!is.na(decade)) %>% 
+  mutate(mod = map(data, ~lm(mean_e0 ~ I(year - min(year)), data = .))) %>% 
+  mutate(tdy_mod = map(mod, broom::tidy)) %>% 
+  select(decade, tdy_mod) %>% 
+  unnest()
+
+```
+
+So, there is no evidence in slowdown of the trend for the mean of all distinct countries.
+
+* From 1955-1964 the average improvement was 0.220 years/year. 
+* From 1965-1974 the average improvement was 0.103 years/year.
+* From 1975-1984 the average improvement was 0.164 years/year. 
+* From 1985-1994 the average improvement was 0.067 years/year.
+* From 1995-2004 the average improvement was 0.228 years/year.
+* From 2005-2014 the average improvement was 0.287 years/year. 
+
+The expansion of the range of countries in the HMD appears to have led to a slowdown from 1985-1994, but this is almost certainly compositional rather than genuine for any particular country. From 2005-2014 the average rate of improvement was faster than in the previous decadal period.
+
 
 Let's look at how the UK compares with this. 
 
@@ -221,17 +317,18 @@ tmp %>%
       filter(sex == "total") %>% 
       filter(code == "GBR_NP") %>% 
       filter(between(year, 1955, 2016)) ,
-    colour = "darkred", shape = 2
+    colour = "darkred", shape = 17
   ) + 
   labs(
     x = "Year", 
     y = "Life expectancy",
-    title = "Life expectancy over time  for average of high income countries (black) and the UK (red)",
+    title = "Life expectancy over time for average of high income countries (black) and the UK (red)",
     subtitle = "The UK fell below the average in the 1960s, started to converge in the 2000s, then fell back after 2012",
     caption = "Black line is unweighted average of 21 countries from White 2002. Source: HMD"
     
   )
 ggsave("figures/pt1_white_update_uk.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave("figures/e0_limits/fig_01_b_highincomeuk.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 
 ```
@@ -239,6 +336,46 @@ ggsave("figures/pt1_white_update_uk.png", height = 12, width = 20, units = "cm",
 So the UK fell below the rich country average in the late 1960s, and hasn't returned since. 
 
 It looked like the UK was starting to close the gap in the late 2000s, but it then fell back in recent years. 
+
+
+And the UK compared with all high income countries.
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  ungroup() 
+
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  geom_point(
+    aes(x = year, y = e0),
+    inherit.aes = F, 
+    data = dta_e0 %>% 
+      filter(sex == "total") %>% 
+      filter(code == "GBR_NP") %>% 
+      filter(between(year, 1955, 2016)) ,
+    colour = "darkred", shape = 17
+  ) + 
+  labs(
+    x = "Year", 
+    y = "Life expectancy",
+    title = "Life expectancy over time for average of all available countries (black) and the UK (red)",
+    subtitle = "The UK fell below the average in the 1960s, started to converge in the 2000s, then fell back after 2012",
+    caption = "Black line is unweighted average of all countries available in HMD for each year."
+    
+  )
+
+ggsave("figures/e0_limits/appendix/fig_01_b_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
+```
+
 
 
 And what was the rate of improvement in UK only?
@@ -341,7 +478,7 @@ tmp %>%
   ) + 
   geom_point(aes(y = mean_e0)) +
   geom_point(aes(y = min_e0), colour = "red") +
-  geom_point(aes(y = uk_e0), colour = "darkred", shape = 2) +
+  geom_point(aes(y = uk_e0), colour = "darkred", shape = 17) +
   geom_text(
     aes(x = year, y = min_e0, label = which_code_min), 
     inherit.aes = F,
@@ -361,6 +498,7 @@ tmp %>%
   )
 
 ggsave("figures/pt1_sandwich.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave("figures/e0_limits/fig_1_c_sandwich.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 
@@ -384,6 +522,61 @@ For the worst-performing country, the average annual improvement is 0.299 years/
 The USA has been the worst performing high income country since the early 2000s, and its life expectancy has fallen steadily below the long-term trend for worst-performing countries. 
 
 The UK's life expectancy was that projected for the worst-performing country trend in 2015, and in 2016 fell below the linear projection for the worst performing country. 
+
+Let's now repeat the exercise for all available hmd countries. This is likely to change the worst performing but not the best. 
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(year) %>% 
+  summarise(
+    max_e0 = max(e0, na.rm = T),
+    which_code_max = code[e0 == max(e0)],
+    min_e0 = min(e0, na.rm = T),
+    which_code_min = code[e0 == min(e0)],
+    mean_e0 = mean(e0, na.rm = T),
+    uk_e0 = e0[code == "GBR_NP"]
+    ) %>% 
+  ungroup() 
+
+tmp %>% 
+  ggplot(aes(x = year)) +
+  geom_point(aes(y = max_e0), colour = "darkgreen") +
+  geom_text(
+    aes(x = year, y = max_e0, label = which_code_max), 
+    inherit.aes = F,
+    colour = "darkgreen",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = 0.5
+  ) + 
+  geom_point(aes(y = mean_e0)) +
+  geom_point(aes(y = min_e0), colour = "red") +
+  geom_point(aes(y = uk_e0), colour = "darkred", shape = 17) +
+  geom_text(
+    aes(x = year, y = min_e0, label = which_code_min), 
+    inherit.aes = F,
+    colour = "red",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = - 0.5
+  ) + 
+  stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "darkgreen", linetype = "dashed") +
+  stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
+  stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "darkred", linetype = "dashed") +
+  labs(
+    x = "Year", y = "Life expectancy in years",
+    title = "Life expectancy trends for best performing, worst performing, average HMD country, and UK, 1955-2016",
+    subtitle = "Best performing: Green; Worst performing: Red; Average: Black; UK: Dark Red",
+    caption = "Unweighted average of all countries available for a year from HMD. Linear trends as dashed lines"
+  )
+
+ggsave("figures/e0_limits/appendix/fig_1_c_sandwich_all_hmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+```
+
+Now Russia has been the worst performing country from the early 1970s. Belarus (?) appears to be for the last couple of years but this may be because the records from Russia aren't available for these years, as indicated by the discontinuity. 
 
 ## Figure 2
 
@@ -843,6 +1036,8 @@ print(fig03)
 
 ggsave("figures/pt2_white_orig.png", height = 12, width = 20, units = "cm", dpi = 300)
 
+ggsave("figures/e0_limits/fig_2_a_change_start_1996.png", height =12, width =20, units = "cm", dpi = 300)
+
 fig03 + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed",
               data = dta_for_fig03 %>% filter(code != "PRT")) + 
@@ -851,6 +1046,7 @@ fig03 +
 
 ggsave("figures/pt2_white_orig_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
 
+ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_smoother.png", height =12, width =20, units = "cm", dpi = 300)
 
 
 
@@ -861,7 +1057,7 @@ What about for all HMD countries?
 
 
 ```{r}
-dta_e0 %>% 
+fig <- dta_e0 %>% 
   filter(code %in% all_distinct_countries) %>% 
   filter(sex == "total") %>% 
   filter(between(year, 1955, 1996)) %>% 
@@ -884,6 +1080,22 @@ dta_e0 %>%
     y = "Average annual change in life expectancy",
     caption = "Replication of figure 3 from White (2002) but with all available countries"
     )  
+
+print(fig)
+
+
+
+ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_allhmd.png", height =12, width =20, units = "cm", dpi = 300)
+
+
+fig + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed",
+              data = dta_for_fig03 %>% filter(code != "PRT")) + 
+  geom_smooth(se = F, colour = "blue",
+              data = dta_for_fig03 %>% filter(code != "PRT"))
+
+ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_allhmd_smoother.png", height =12, width =20, units = "cm", dpi = 300)
+
 
 ```
 
@@ -918,12 +1130,14 @@ fig03_update <- tmp %>%
 print(fig03_update)
 
 ggsave("figures/pt2_white_update.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave("figures/e0_limits/fig2b_start_change_2016.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 fig03_update + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
   geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
 
 ggsave("figures/pt2_white_update_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave("figures/e0_limits/appendix/fig2b_start_change_2016.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 
 
@@ -962,11 +1176,55 @@ tmp %>%
 
 ggsave("figures/pt1_supp_white_2010plus.png", height = 12, width = 20, units = "cm", dpi = 300)
 
-
+ggsave("figures/e0_limits/appendix/ch_since_2010.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 
 This is an important 'dog that didn't bark': there's no apparent association between the rate of slowdown since 2010 and the life expectancy in 2010. Though the long-term tendency may be for there to be a slowdown, it's not something that explains what happened this time. 
+
+Now all countries, up to 2016
+
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1955 = ifelse(1955 %in% year, e0[year == 1955], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1955, mean_ch_e0) 
+
+fig03_update <- tmp %>% 
+  ggplot(aes(x = val_in_1955, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    title = "Life expectancy in 1955 against average change in life expectancy up to 2016", 
+    subtitle = "All countries with life expectancy in 1955",
+    x = "Life expectancy in 1955 (years)", y = "Average annual change in life expectancy",
+    caption = "Updating of figure 3 from White (2002) to include data up to 2016"
+    )  
+
+print(fig03_update)
+
+
+ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+fig03_update + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
+  geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
+
+ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_allhmd_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
+
+```
 
 Let's see if this were the case for other ten year periods
 
@@ -1005,10 +1263,52 @@ tmp %>%
   )
 
 ggsave("figures/pt1_white_sliced.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave("figures/e0_limits/sliced_startchange.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 
 ```
 This figure shows that the degree to which the limits-to-growth argument holds in high income countries is falling, rather than increasing, again suggesting it is not an important factor in explaining the recent slowdown in the UK (highlighted with a translucent symbol). 
+
+And now, all countries 
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2015)) %>% 
+  mutate(Decade = cut(year, seq(1955, 2015, by = 10), include.lowest = T)) %>% 
+  group_by(code, Decade) %>% 
+  arrange(year) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year))
+
+tmp2 <- tmp %>% filter(code == "GBR_NP")
+
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F) +
+  labs(
+    title = "Life expectancy against average annual change in life expectancy over 6 decades", 
+    subtitle = "All countries with records at start of each mid-decade. UK is highlighted for each decade",
+    x = "Life expectancy at start of decade", 
+    y = "Average annual change in life expectancy over decade",
+    caption = "Based on figure 3 of White (2002)"
+  )
+
+ggsave("figures/e0_limits/appendix/sliced_startchange_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
+```
 
 
 ## Tadpole charts and derivatives 
