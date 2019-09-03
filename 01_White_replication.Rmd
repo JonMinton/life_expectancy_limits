@@ -1,6 +1,8 @@
 ---
 title: "Slowdown hypothesis"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Introduction 
@@ -1703,7 +1705,7 @@ This also seems to be an important paper, as it shows how both the UK and the US
 
 ## Figure 5
 
-...
+
 
 #New figures requested by Rebecca 
 
