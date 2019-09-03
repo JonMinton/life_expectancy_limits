@@ -200,6 +200,39 @@ So, there is no evidence in slowdown of the trend for the mean of high income co
 
 By subtracting the minimum year in each decade, the intercepts now show the life expectancy at the start of the period, and so are more meaningful. This increased from 69 in 1955 to 80 in 2005. 
 
+Table of the above 
+
+```{r}
+show_2dp <- function(x){format(round(x, 2), nsmall = 2)}
+
+dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>%
+  mutate(decade = cut(year, seq(1955, 2015, by = 10), include.lowest = TRUE)) %>% 
+  group_by(year, decade) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  group_by(decade) %>% 
+  nest() %>% 
+  filter(!is.na(decade)) %>% 
+  mutate(mod = map(data, ~lm(mean_e0 ~ I(year - min(year)), data = .))) %>% 
+  mutate(tdy_mod = map(mod, broom::tidy)) %>% 
+  select(decade, tdy_mod) %>% 
+  unnest() %>% 
+  mutate(text = glue::glue(
+    "{show_2dp(estimate)} [{show_2dp(estimate - 2 * std.error)} to {show_2dp(estimate + 2 * std.error)}]"
+   )
+  ) %>% 
+  select(decade, term, text) %>% 
+  spread(term, text) %>% 
+  rename(
+    `Decade` = `decade`,
+    `Life expectancy at start of decade (+/- 2 SEs)` = `(Intercept)`,
+    `Mean gain in life expectancy per year (+/- 2 SEs)` = `I(year - min(year))`
+  )
+
+```
+
 As above, all countries
 
 ```{r}
@@ -293,6 +326,37 @@ So, there is no evidence in slowdown of the trend for the mean of all distinct c
 * From 2005-2014 the average improvement was 0.287 years/year. 
 
 The expansion of the range of countries in the HMD appears to have led to a slowdown from 1985-1994, but this is almost certainly compositional rather than genuine for any particular country. From 2005-2014 the average rate of improvement was faster than in the previous decadal period.
+
+And as a more nicely formatted table
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>%
+  mutate(decade = cut(year, seq(1955, 2015, by = 10), include.lowest = TRUE)) %>% 
+  group_by(year, decade) %>% 
+  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+  group_by(decade) %>% 
+  nest() %>% 
+  filter(!is.na(decade)) %>% 
+  mutate(mod = map(data, ~lm(mean_e0 ~ I(year - min(year)), data = .))) %>% 
+  mutate(tdy_mod = map(mod, broom::tidy)) %>% 
+  select(decade, tdy_mod) %>% 
+  unnest() %>% 
+  mutate(text = glue::glue(
+    "{show_2dp(estimate)} [{show_2dp(estimate - 2 * std.error)} to {show_2dp(estimate + 2 * std.error)}]"
+   )
+  ) %>% 
+  select(decade, term, text) %>% 
+  spread(term, text) %>% 
+  rename(
+    `Decade` = `decade`,
+    `Life expectancy at start of decade (+/- 2 SEs)` = `(Intercept)`,
+    `Mean gain in life expectancy per year (+/- 2 SEs)` = `I(year - min(year))`
+  )
+
+```
 
 
 Let's look at how the UK compares with this. 
@@ -396,6 +460,35 @@ dta_e0 %>%
 
 
 
+
+```
+
+And nicely formatted
+
+```{r}
+dta_e0 %>% 
+  filter(code== "GBR_NP") %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1955, 2016)) %>%
+  mutate(decade = cut(year, seq(1955, 2015, by = 10), include.lowest = TRUE)) %>% 
+  group_by(decade) %>% 
+  nest() %>% 
+  filter(!is.na(decade)) %>% 
+  mutate(mod = map(data, ~lm(e0 ~ I(year - min(year)), data = .))) %>% 
+  mutate(tdy_mod = map(mod, broom::tidy)) %>% 
+  select(decade, tdy_mod) %>% 
+  unnest() %>% 
+  mutate(text = glue::glue(
+    "{show_2dp(estimate)} [{show_2dp(estimate - 2 * std.error)} to {show_2dp(estimate + 2 * std.error)}]"
+   )
+  ) %>% 
+  select(decade, term, text) %>% 
+  spread(term, text) %>% 
+  rename(
+    `Decade` = `decade`,
+    `Life expectancy at start of decade (+/- 2 SEs)` = `(Intercept)`,
+    `Mean gain in life expectancy per year (+/- 2 SEs)` = `I(year - min(year))`
+  )
 
 ```
 
@@ -1308,6 +1401,34 @@ tmp %>%
 ggsave("figures/e0_limits/appendix/sliced_startchange_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
 
 
+```
+
+The changing composition of the countries means there's no longer a clear pattern. 
+
+
+# Changing availability of countries over time 
+
+The following figure will show if a country is present or absent for a particular year 
+
+
+```{r}
+dta_e0 %>% 
+  filter(code %in% all_distinct_countries) %>% 
+  filter(sex == "total") %>% 
+  select(-sex) %>% 
+  mutate(data_present = is.finite(e0)) %>% 
+  select(code, year, data_present) %>% 
+  right_join(tibble(year = 1955:2016)) %>% 
+  ggplot(aes(y = code, x = year, fill = data_present)) +
+  geom_tile() + 
+  scale_fill_manual(values = c(`TRUE` = 'blue', `FALSE` = 'green')) + 
+  theme_bw() + theme(legend.position = 'none') +
+  labs(title = "Data availability by year",
+       subtitle = "Availability in HMD. For years between 1955 and 2016 inclusive", x = "Year", y = "HMD Country code",
+       caption = "HMD: Human Mortality Database") +
+  scale_x_continuous(minor_breaks = 1955:2016)
+
+ggsave("figures/e0_limits/appendix/data_availability_map.png", height = 15, width = 15, units = "cm", dpi = 300)
 ```
 
 
