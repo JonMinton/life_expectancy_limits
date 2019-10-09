@@ -7,6 +7,7 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
@@ -188,28 +189,10 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 <style type="text/css">
 .code-folding-btn { margin-bottom: 4px; }
 </style>
-<script>
-$(document).ready(function () {
-  window.initializeSourceEmbed("00_extract_e0.Rmd");
-  window.initializeCodeFolding("show" === "show");
-});
-</script>
 
 
 
@@ -299,8 +282,8 @@ type in a single character string.</code></pre>
 <pre><code>
 type in a single character string.</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZW50cm9wMWNcbmBgYCJ9 -->
-<pre class="r"><code>entrop1c</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZm94aGVhZDAwXG5gYGAifQ== -->
+<pre class="r"><code>foxhead00</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-begin eyJkYXRhIjoiUmVhZCAxIGl0ZW1cbiJ9 -->
 <pre><code>Read 1 item</code></pre>
@@ -321,6 +304,10 @@ type in a single character string.</code></pre>
   contains_e0 = map_lgl(available_items, ~`%in%`(&quot;E0per&quot;, .x))
 ) </code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gaXMucmVzcG9uc2UoeCkgOiBcbiAgVGltZW91dCB3YXMgcmVhY2hlZDogQ29ubmVjdGlvbiB0aW1lZCBvdXQgYWZ0ZXIgMTAwMDEgbWlsbGlzZWNvbmRzXG4ifQ== -->
+<pre><code>Error in is.response(x) : 
+  Timeout was reached: Connection timed out after 10001 milliseconds</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
@@ -379,11 +366,22 @@ type in a single character string.</code></pre>
   mutate(sex = tolower(sex)) %&gt;% 
    rename(year = Year, age = Age)</code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG5DTlRSWSBub3QgZm91bmRcblNlbGVjdCBpdGVtIENvZGUgXG5cbjogXG4ifQ== -->
+<pre><code>
+CNTRY not found
+Select item Code 
+
+: </code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>Now write this</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxud3JpdGVfcmRzKE14X2RhdGEsIFwidGlkeV9kYXRhL014X2RhdGEucmRzXCIpXG5cbmBgYCJ9 -->
+<pre class="r"><code>write_rds(Mx_data, &quot;tidy_data/Mx_data.rds&quot;)
+</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 </div>
 
@@ -416,6 +414,29 @@ $(document).ready(function () {
 });
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("00_extract_e0.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
