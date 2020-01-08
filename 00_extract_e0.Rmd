@@ -9,7 +9,7 @@ This script will aim to set up the project to use tidyverse packages, and use th
 # Load packages 
 
 
-n.b. `pacman1` has been installed already
+n.b. `pacman` has been installed already
 
 ```{r}
 pacman::p_load(

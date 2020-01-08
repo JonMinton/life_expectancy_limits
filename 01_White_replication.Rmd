@@ -27,7 +27,7 @@ All but one of the above can be replicated with the period life expectancy data 
 ```{r}
 pacman::p_load(
   tidyverse, HMDHFDplus,
-  ggrepel
+  ggrepel, kableExtra
 )
 
 dta_e0 <- read_rds("tidy_data/e0_period.rds")
@@ -598,6 +598,89 @@ ggsave("figures/e0_limits/fig_1_c_sandwich.png", height = 12, width = 20, units 
 ```
 
 In the figure above, the red dots show the worst performing of the 21 high income countries, the green dots that for the best performing country. The black dots show the average (mean) for these countries, and the blue dots show the life expectancies for the UK. Every five years, the best and worst performing country is labelled. 
+
+Table summarising above 
+
+* Intercept: $e_0$ in 1955
+* Slope: Average $e_0$ gain per year since
+* Fit: $R^2$
+
+For worst, best, mean
+
+```{r}
+summary_best_worst_mean_hi <- 
+  dta_e0 %>% 
+    filter(code %in% high_income_countries) %>% 
+    filter(sex == "total") %>% 
+    filter(between(year, 1955, 2016)) %>% 
+    group_by(year) %>% 
+    summarise(
+      max_e0 = max(e0, na.rm = T),
+      which_code_max = code[e0 == max(e0)],
+      min_e0 = min(e0, na.rm = T),
+      which_code_min = code[e0 == min(e0)],
+      mean_e0 = mean(e0, na.rm = T),
+      uk_e0 = e0[code == "GBR_NP"]
+      ) %>% 
+    ungroup() %>% 
+    select(year, min_e0, max_e0, mean_e0) %>% 
+    gather(-year, key = "popn", value = "e0") %>% 
+    group_by(popn) %>% 
+    nest() %>% 
+    mutate(model = map(data, ~lm(e0 ~ year, data = .))) %>% 
+    mutate(mdl_tidy = map(model, broom::tidy)) %>% 
+    mutate(mdl_diag = map(model, broom::glance))
+
+```
+
+```{r}
+pt1 <- 
+  summary_best_worst_mean_hi %>% 
+    select(popn, mdl_tidy) %>% 
+    unnest(mdl_tidy) %>% 
+    filter(term == "year") 
+
+pt2 <- 
+  summary_best_worst_mean_hi %>% 
+      select(popn, mdl_diag) %>% 
+      unnest(mdl_diag) %>% 
+    select(popn, r.squared, adj.r.squared)
+
+pt3 <- 
+  dta_e0 %>% 
+    filter(code %in% high_income_countries) %>% 
+    filter(sex == "total") %>% 
+    filter(between(year, 1955, 2016)) %>% 
+    group_by(year) %>% 
+    summarise(
+      max_e0 = max(e0, na.rm = T),
+      which_code_max = code[e0 == max(e0)],
+      min_e0 = min(e0, na.rm = T),
+      which_code_min = code[e0 == min(e0)],
+      mean_e0 = mean(e0, na.rm = T),
+      uk_e0 = e0[code == "GBR_NP"]
+      ) %>% 
+    ungroup() %>% 
+    select(year, min_e0, max_e0, mean_e0) %>% 
+    filter(year == 1955) %>% 
+    gather(-year, key = "popn", value = "e0_1955") %>% 
+    select(-year)
+
+pt1 %>% left_join(pt2) %>% left_join(pt3) %>% 
+  select(-term) %>%
+  ungroup() %>% 
+  mutate(popn = case_when(
+    popn == "min_e0"  ~ "Lowest", 
+    popn == "max_e0"  ~ "Highest", 
+    popn == "mean_e0"  ~ "Average", 
+    TRUE ~ NA_character_
+  )) %>% 
+  rename(slope = estimate) %>% 
+  select(popn, e0_1955, slope, everything(), -p.value) %>% 
+  kable(digits = 3,
+        col.names = c("Population", "e0 in 1955", "Average annual gain", "SE", "t value", "R squared", "Adj. R Squared")) %>% 
+  kable_styling() 
+```
 
 ```{r}
 tmp %>% 
@@ -1277,6 +1360,52 @@ ggsave("figures/e0_limits/appendix/ch_since_2010.png", height = 12, width = 20, 
 
 This is an important 'dog that didn't bark': there's no apparent association between the rate of slowdown since 2010 and the life expectancy in 2010. Though the long-term tendency may be for there to be a slowdown, it's not something that explains what happened this time. 
 
+Requestion addition: change from 1997 to 2016 
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1997, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1997 = ifelse(1997 %in% year, e0[year == 1997], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1997, mean_ch_e0) 
+
+fig03_update_b <- tmp %>% 
+  ggplot(aes(x = val_in_1997, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    title = "Life expectancy in 1997 against average change in life expectancy up to 2016", 
+    subtitle = "21 high income countries",
+    x = "Life expectancy in 1997 (years)", y = "Average annual change in life expectancy"
+    )  
+
+print(fig03_update_b)
+
+ggsave("figures/pt2_white_update_b.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave("figures/e0_limits/fig2b_start_change_2016_b.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+fig03_update_b + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
+  geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
+
+ggsave("figures/pt2_white_update_smoother_b.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_b.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
+
+
+```
+
+
+
 Now all countries, up to 2016
 
 
@@ -1568,7 +1697,7 @@ dta_e0 %>%
   mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
   mutate(diff_from_mean = e0 - mean_e0) %>% 
   summarise(var = var(diff_from_mean)) %>% 
-  ggplot(aes(x = year, y = var, group = group)) + 
+  ggplot(aes(x = year, y = var, group = group, shape = group)) + 
   geom_point() + geom_line() +
   scale_y_continuous(limits = c(0, 12))
 
@@ -1586,7 +1715,7 @@ dta_e0 %>%
   mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
   mutate(diff_from_mean = e0 - mean_e0) %>% 
   summarise(var = var(diff_from_mean)) %>% 
-  ggplot(aes(x = year, y = var, group = group)) + 
+  ggplot(aes(x = year, y = var, group = group, shape = group)) + 
   geom_point() + geom_line() +
   scale_y_continuous(limits = c(0, 12))
 
@@ -1606,7 +1735,7 @@ dta_e0 %>%
   mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
   mutate(diff_from_mean = e0 - mean_e0) %>% 
   summarise(var = var(diff_from_mean)) %>% 
-  ggplot(aes(x = year, y = var, group = group)) + 
+  ggplot(aes(x = year, y = var, group = group, shape = group)) + 
   geom_point() + geom_line() +
   scale_y_continuous(limits = c(0, 20))
 
