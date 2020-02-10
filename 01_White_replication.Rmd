@@ -101,6 +101,20 @@ fig_01_dta %>%
 
 ggsave(here("figures", "pt1_white_orig.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
+fig_01_dta %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years" 
+  )
+
+ggsave(here("figures", "pt1_white_orig_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+
 ```
 
 And what's the average improvement per year?
@@ -150,6 +164,20 @@ tmp %>%
 ggsave(here("figures", "pt1_white_update.png"), height = 12, width = 20, units = "cm", dpi = 300)
 ggsave(here("figures", "e0_limits", "fig_1_a_all_highincome.png"), height = 12, width = 20, units = "cm", dpi = 300)
   
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years" 
+  )
+
+ggsave(here("figures", "pt1_white_update_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_1_a_all_highincome_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 ```
 
 The near perfect linearlity has continued beyond 1996. 
@@ -337,6 +365,20 @@ tmp %>%
 
 ggsave(here("figures", "e0_limits", "appendix", "fig_1_a_all_hmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
   
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years"
+  )
+
+ggsave(here("figures", "e0_limits", "appendix", "fig_1_a_all_hmd_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+  
+
 ```
 
 The fit is clearly less linear over time. This is likely due to changing composition of the countries over time, perhaps due to many Eastern European countries appearing post 1990ish, pulling the average down, but then increasing quickly thereafter. 
@@ -475,6 +517,28 @@ tmp %>%
 ggsave(here("figures", "pt1_white_update_uk.png"), height = 12, width = 20, units = "cm", dpi = 300)
 ggsave(here("figures", "e0_limits", "fig_01_b_highincomeuk.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  geom_point(
+    aes(x = year, y = e0),
+    inherit.aes = F, 
+    data = dta_e0 %>% 
+      filter(sex == "total") %>% 
+      filter(code == "GBR_NP") %>% 
+      filter(between(year, 1955, 2016)) ,
+    colour = "darkred", shape = 1
+  ) + 
+  labs(
+    x = "Year", 
+    y = "Life expectancy"
+  )
+ggsave(here("figures", "pt1_white_update_uk_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_01_b_highincomeuk_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 
 ```
 
@@ -518,6 +582,27 @@ tmp %>%
 
 ggsave(here("figures", "e0_limits", "appendix", "fig_01_b_allhmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
+
+
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  geom_point(
+    aes(x = year, y = e0),
+    inherit.aes = F, 
+    data = dta_e0 %>% 
+      filter(sex == "total") %>% 
+      filter(code == "GBR_NP") %>% 
+      filter(between(year, 1955, 2016)) ,
+    colour = "darkred", shape = 17
+  ) + 
+  labs(
+    x = "Year", 
+    y = "Life expectancy"
+  )
+
+ggsave(here("figures", "e0_limits", "appendix", "fig_01_b_allhmd_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 
@@ -673,6 +758,38 @@ tmp %>%
 
 ggsave(here("figures", "pt1_sandwich.png"), height = 12, width = 20, units = "cm", dpi = 300)
 ggsave(here("figures", "e0_limits", "fig_1_c_sandwich.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(aes(x = year)) +
+  geom_point(aes(y = max_e0), colour = "darkgreen") +
+  geom_text(
+    aes(x = year, y = max_e0, label = which_code_max), 
+    inherit.aes = F,
+    colour = "darkgreen",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = 0.5
+  ) + 
+  geom_point(aes(y = mean_e0)) +
+  geom_point(aes(y = min_e0), colour = "red") +
+  geom_point(aes(y = uk_e0), colour = "darkred", shape = 17) +
+  geom_text(
+    aes(x = year, y = min_e0, label = which_code_min), 
+    inherit.aes = F,
+    colour = "red",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = - 0.5
+  ) + 
+  stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "darkgreen", linetype = "dashed") +
+  stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
+  stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "darkred", linetype = "dashed") +
+  labs(
+    x = "Year", y = "Life expectancy in years"
+  )
+
+ggsave(here("figures", "pt1_sandwich_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_1_c_sandwich_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 
 ```
 
@@ -943,6 +1060,38 @@ tmp %>%
   )
 
 ggsave("figures/e0_limits/appendix/fig_1_c_sandwich_all_hmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(aes(x = year)) +
+  geom_point(aes(y = max_e0), colour = "darkgreen") +
+  geom_text(
+    aes(x = year, y = max_e0, label = which_code_max), 
+    inherit.aes = F,
+    colour = "darkgreen",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = 0.5
+  ) + 
+  geom_point(aes(y = mean_e0)) +
+  geom_point(aes(y = min_e0), colour = "red") +
+  geom_point(aes(y = uk_e0), colour = "darkred", shape = 17) +
+  geom_text(
+    aes(x = year, y = min_e0, label = which_code_min), 
+    inherit.aes = F,
+    colour = "red",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = - 0.5
+  ) + 
+  stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "darkgreen", linetype = "dashed") +
+  stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
+  stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "darkred", linetype = "dashed") +
+  labs(
+    x = "Year", y = "Life expectancy in years"
+  )
+
+ggsave("figures/e0_limits/appendix/fig_1_c_sandwich_all_hmd_plain.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
 
 ```
 
@@ -1270,7 +1419,7 @@ tmp %>%
     caption = "Unweighted average (mean) of 21 countries from White 2002"
   )
 
-ggsave("figures/supp_avg_ch_e0_cf_scot.png", height = 12, width = 29, units = "cm", dpi = 300)
+ggsave(here("figures", "supp_avg_ch_e0_cf_scot.png"), height = 12, width = 29, units = "cm", dpi = 300)
 
 
 
@@ -1414,9 +1563,9 @@ fig03 +
   geom_smooth(se = F, colour = "blue",
               data = dta_for_fig03 %>% filter(code != "PRT"))
 
-ggsave("figures/pt2_white_orig_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt2_white_orig_smoother.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
-ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_smoother.png", height =12, width =20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_2_a_change_start_1996_smoother.png"), height =12, width =20, units = "cm", dpi = 300)
 
 
 
@@ -1455,7 +1604,7 @@ print(fig)
 
 
 
-ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_allhmd.png", height =12, width =20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_2_a_change_start_1996_allhmd.png"), height =12, width =20, units = "cm", dpi = 300)
 
 
 fig + 
@@ -1464,7 +1613,7 @@ fig +
   geom_smooth(se = F, colour = "blue",
               data = dta_for_fig03 %>% filter(code != "PRT"))
 
-ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_allhmd_smoother.png", height =12, width =20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_2_a_change_start_1996_allhmd_smoother.png"), height =12, width =20, units = "cm", dpi = 300)
 
 
 ```
@@ -1499,15 +1648,15 @@ fig03_update <- tmp %>%
 
 print(fig03_update)
 
-ggsave("figures/pt2_white_update.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/fig2b_start_change_2016.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt2_white_update.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","fig2b_start_change_2016.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 fig03_update + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
   geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
 
-ggsave("figures/pt2_white_update_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/appendix/fig2b_start_change_2016.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","pt2_white_update_smoother.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","fig2b_start_change_2016.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 
 
@@ -1544,9 +1693,9 @@ tmp %>%
     x = "Life expectancy in 2010 (years)", y = "Average annual change in life expectancy"
     )  
 
-ggsave("figures/pt1_supp_white_2010plus.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","pt1_supp_white_2010plus.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
-ggsave("figures/e0_limits/appendix/ch_since_2010.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","ch_since_2010.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 
@@ -1581,15 +1730,15 @@ fig03_update_b <- tmp %>%
 
 print(fig03_update_b)
 
-ggsave("figures/pt2_white_update_b.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/fig2b_start_change_2016_b.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","pt2_white_update_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","fig2b_start_change_2016_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 fig03_update_b + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
   geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
 
-ggsave("figures/pt2_white_update_smoother_b.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_b.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","pt2_white_update_smoother_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","fig2b_start_change_2016_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 
 
@@ -1630,13 +1779,13 @@ fig03_update <- tmp %>%
 print(fig03_update)
 
 
-ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","fig2b_start_change_2016_allhmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 fig03_update + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
   geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
 
-ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_allhmd_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix","fig2b_start_change_2016_allhmd_smoother.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 
 
@@ -1678,8 +1827,29 @@ tmp %>%
     caption = "Based on figure 3 of White (2002)"
   )
 
-ggsave("figures/pt1_white_sliced.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/sliced_startchange.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt1_white_sliced.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","sliced_startchange.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F) +
+  labs(
+    x = "Life expectancy at start of decade", 
+    y = "Average annual change in life expectancy over decade"
+  )
+
+ggsave(here("figures", "pt1_white_sliced_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","sliced_startchange_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 
 
 ```
@@ -1721,7 +1891,27 @@ tmp %>%
     caption = "Based on figure 3 of White (2002)"
   )
 
-ggsave("figures/e0_limits/appendix/sliced_startchange_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits","appendix","sliced_startchange_allhmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F) +
+  labs(
+    x = "Life expectancy at start of decade", 
+    y = "Average annual change in life expectancy over decade"
+  )
+
+ggsave(here("figures", "e0_limits","appendix","sliced_startchange_allhmd_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 
 
 ```
@@ -2165,7 +2355,7 @@ fig_all_upto2016 <- dta_for_figall_upto2016 %>%
 print(fig_all_upto2016)
 
 
-png(filename = "figures/2x1_all_e0_che0.png", width = 35, height = 15, res = 300, units = "cm") 
+png(filename = here("figures","2x1_all_e0_che0.png"), width = 35, height = 15, res = 300, units = "cm") 
 gridExtra::grid.arrange(fig_all_upto1996, fig_all_upto2016, nrow = 1)
 dev.off()
 
