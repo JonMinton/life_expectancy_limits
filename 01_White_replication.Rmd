@@ -114,6 +114,13 @@ fig_01_dta %>%
 
 Around  0.211 years/year, not the 0.208 given in the paper. (So close enough given changes in data quality and HMD protocol changes)
 
+```{r}
+fig_01_dta %>% 
+  lm(mean_e0 ~ I(year-1950), data = .) %>% 
+  summary()
+
+```
+
 
 Now how has this continued?
 
@@ -504,7 +511,7 @@ tmp %>%
     x = "Year", 
     y = "Life expectancy",
     title = "Life expectancy over time for average of all available countries (black) and the UK (red)",
-    subtitle = "The UK fell below the average in the 1960s, started to converge in the 2000s, then fell back after 2012",
+    
     caption = "Black line is unweighted average of all countries available in HMD for each year."
     
   )
@@ -705,7 +712,7 @@ summary_best_worst_mean_hi <-
 
 ```
 
-```{r}
+```{r, results='asif'}
 pt1 <- 
   summary_best_worst_mean_hi %>% 
     select(popn, mdl_tidy) %>% 
@@ -782,7 +789,7 @@ summary_best_worst_mean_hi <-
 
 ```
 
-```{r}
+```{r, results = 'asis'}
 pt1 <- 
   summary_best_worst_mean_hi %>% 
     select(popn, mdl_tidy) %>% 
@@ -860,7 +867,7 @@ all_countries_summary <-
 wb <- createWorkbook()
 addWorksheet(wb, sheetName = "All Countries Summaries")
 writeData(wb = wb, sheet = "All Countries Summaries", x = all_countries_summary)
-openxlsx::saveWorkbook(wb, file = here("tables", "all_summaries.xlsx"))
+openxlsx::saveWorkbook(wb, file = here("tables", "all_summaries.xlsx"), overwrite = TRUE)
 
 all_countries_summary
 ```
