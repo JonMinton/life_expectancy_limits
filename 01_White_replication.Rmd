@@ -1733,6 +1733,23 @@ print(fig03_update_b)
 ggsave(here("figures","pt2_white_update_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
 ggsave(here("figures","e0_limits","fig2b_start_change_2016_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
+
+fig03_update_b_plain <- tmp %>% 
+  ggplot(aes(x = val_in_1997, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    x = "Life expectancy in 1997 (years)", y = "Average annual change in life expectancy"
+    )  
+
+print(fig03_update_b_plain)
+
+ggsave(here("figures","pt2_white_update_b_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","fig2b_start_change_2016_b_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+
+
 fig03_update_b + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
   geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
