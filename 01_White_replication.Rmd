@@ -1868,6 +1868,26 @@ ggsave(here("figures", "pt1_white_sliced_plain.png"), height = 12, width = 20, u
 ggsave(here("figures","e0_limits","sliced_startchange_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = Decade, shape = Decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = Decade, shape = Decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F, colour = "black") +
+  labs(
+    x = "Life expectancy at start of decade", 
+    y = "Average annual change in life expectancy over decade"
+  ) 
+  
+
+ggsave(here("figures", "pt1_white_sliced_plain_blackwhite.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","sliced_startchange_plain_blackwhite.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 This figure shows that the degree to which the limits-to-growth argument holds in high income countries is falling, rather than increasing, again suggesting it is not an important factor in explaining the recent slowdown in the UK (highlighted with a translucent symbol). 
