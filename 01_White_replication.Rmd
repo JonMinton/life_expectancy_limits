@@ -26,11 +26,11 @@ All but one of the above can be replicated with the period life expectancy data 
 
 ```{r}
 pacman::p_load(
-  tidyverse, HMDHFDplus,
-  ggrepel
+  tidyverse, HMDHFDplus, here, 
+  ggrepel, kableExtra, openxlsx
 )
 
-dta_e0 <- read_rds("tidy_data/e0_period.rds")
+dta_e0 <- read_rds(here("tidy_data","e0_period.rds"))
 
 ```
 
@@ -62,7 +62,7 @@ The high income countries were:
 
 
 ```{r}
-source("scripts/country_definitions.R")
+source(here("scripts", "country_definitions.R"))
 
 ```
 
@@ -88,6 +88,8 @@ fig_01_dta <- dta_e0 %>%
 fig_01_dta %>% 
   ggplot(aes(x = year, y = mean_e0)) +
   geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
   stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
   labs(
     x = "Year", 
@@ -97,7 +99,21 @@ fig_01_dta %>%
     caption = "Unweighted average of 21 countries used in White (2002), replication of figure 1"
   )
 
-ggsave("figures/pt1_white_orig.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt1_white_orig.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+fig_01_dta %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years" 
+  )
+
+ggsave(here("figures", "pt1_white_orig_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 
 ```
 
@@ -111,6 +127,13 @@ fig_01_dta %>%
 ```
 
 Around  0.211 years/year, not the 0.208 given in the paper. (So close enough given changes in data quality and HMD protocol changes)
+
+```{r}
+fig_01_dta %>% 
+  lm(mean_e0 ~ I(year-1950), data = .) %>% 
+  summary()
+
+```
 
 
 Now how has this continued?
@@ -127,6 +150,8 @@ tmp <- dta_e0 %>%
 tmp %>% 
   ggplot(aes(x = year, y = mean_e0)) +
   geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
   stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
   labs(
     x = "Year", 
@@ -136,9 +161,23 @@ tmp %>%
     caption = "Unweighted average of 21 countries used in White (2002), replication and updating of figure 1"
   )
 
-ggsave("figures/pt1_white_update.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/fig_1_a_all_highincome.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt1_white_update.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_1_a_all_highincome.png"), height = 12, width = 20, units = "cm", dpi = 300)
   
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years" 
+  )
+
+ggsave(here("figures", "pt1_white_update_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_1_a_all_highincome_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 ```
 
 The near perfect linearlity has continued beyond 1996. 
@@ -207,31 +246,95 @@ Table of the above
 ```{r}
 show_2dp <- function(x){format(round(x, 2), nsmall = 2)}
 
-dta_e0 %>% 
-  filter(code %in% high_income_countries) %>% 
-  filter(sex == "total") %>% 
-  filter(between(year, 1955, 2016)) %>%
-  mutate(decade = cut(year, seq(1955, 2015, by = 10), include.lowest = TRUE)) %>% 
-  group_by(year, decade) %>% 
-  summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
-  group_by(decade) %>% 
-  nest() %>% 
-  filter(!is.na(decade)) %>% 
-  mutate(mod = map(data, ~lm(mean_e0 ~ I(year - min(year)), data = .))) %>% 
-  mutate(tdy_mod = map(mod, broom::tidy)) %>% 
-  select(decade, tdy_mod) %>% 
-  unnest() %>% 
-  mutate(text = glue::glue(
-    "{show_2dp(estimate)} [{show_2dp(estimate - 2 * std.error)} to {show_2dp(estimate + 2 * std.error)}]"
-   )
-  ) %>% 
-  select(decade, term, text) %>% 
-  spread(term, text) %>% 
-  rename(
-    `Decade` = `decade`,
-    `Life expectancy at start of decade (+/- 2 SEs)` = `(Intercept)`,
-    `Mean gain in life expectancy per year (+/- 2 SEs)` = `I(year - min(year))`
-  )
+
+make_wide_table <- function(x = dta_e0, 
+                            country_selection, 
+                            sex_selection = c("total", "male", "female"),
+                            period_selection = c(1955, 2016),
+                            cut_selection = seq(1955, 2015, by = 10)
+                            ){
+  x %>% 
+    filter(code %in% country_selection) %>% 
+    filter(sex == sex_selection) %>% 
+    filter(between(year, period_selection[1], period_selection[2])) %>%
+    mutate(decade = cut(year, cut_selection, include.lowest = TRUE)) %>% 
+    group_by(year, decade) %>% 
+    summarise(mean_e0 = mean(e0, na.rm = T)) %>% 
+    group_by(decade) %>% 
+    nest() %>% 
+    filter(!is.na(decade)) %>% 
+    mutate(mod = map(data, ~lm(mean_e0 ~ I(year - min(year)), data = .))) %>% 
+    mutate(tdy_mod = map(mod, broom::tidy)) %>% 
+    select(decade, tdy_mod) %>% 
+    unnest() %>% 
+    mutate(estimate = round(estimate, 2), lower = round(estimate - 2 * std.error, 2), upper = round(estimate + 2 * std.error, 2)) %>% 
+    mutate(text = glue::glue(
+      "{show_2dp(estimate)} [{show_2dp(lower)} to {show_2dp(upper)}]"
+     )
+    ) %>% 
+    select(decade, term, text) %>% 
+    spread(term, text) %>% 
+    rename(
+      `Decade` = `decade`,
+      `Life expectancy at start of decade (+/- 2 SEs)` = `(Intercept)`,
+      `Mean gain in life expectancy per year (+/- 2 SEs)` = `I(year - min(year))`
+    )
+}
+
+save_format_dt <- function(wb, sheet_name, dta, cols = 1:3){
+  wb %>% 
+    addWorksheet(sheetName = sheet_name)
+  wb %>% writeDataTable(sheet = sheet_name, x = dta)
+  wb %>% setColWidths(sheet = sheet_name, cols = cols, widths = "auto")
+}
+
+wb <- createWorkbook()
+
+# wb %>% addWorksheet(sheetName = "Decadal gains, high income")
+# wb %>% openxlsx::writeDataTable(sheet = "Decadal gains, high income", 
+#     x = make_wide_table(country_selection = high_income_countries)
+#   )
+
+# wb %>% addWorksheet(sheetName = "Decadal gains, all")
+# wb %>% openxlsx::writeDataTable(sheet = "Decadal gains, all", 
+#     x = make_wide_table(country_selection = all_distinct_countries)
+#   )
+# wb %>% setColWidths(sheet = "Decadal gains, all", cols = 1:3, widths = "auto")
+save_format_dt(wb = wb,
+  sheet_name = "Decadal gains, high income", 
+  dta = make_wide_table(country_selection = high_income_countries)
+)
+
+save_format_dt(wb = wb,
+  sheet_name = "Decadal gains, high income, fem", 
+  dta = make_wide_table(country_selection = high_income_countries, sex_selection = "female" )
+)
+
+
+save_format_dt(wb = wb,
+  sheet_name = "Decadal gains, high_income, mal", 
+  dta = make_wide_table(country_selection = high_income_countries, sex_selection = "male")
+)
+
+save_format_dt(wb = wb,
+  sheet_name = "Decadal gains, all", 
+  dta = make_wide_table(country_selection = all_distinct_countries)
+)
+
+save_format_dt(wb = wb,
+  sheet_name = "Decadal gains, all, fem", 
+  dta = make_wide_table(country_selection = all_distinct_countries, sex_selection = "female" )
+)
+
+
+save_format_dt(wb = wb,
+  sheet_name = "Decadal gains, all, mal", 
+  dta = make_wide_table(country_selection = all_distinct_countries, sex_selection = "male")
+)
+
+
+
+saveWorkbook(wb, file = here("tables", "decadal_summaries.xlsx"), overwrite = TRUE)
 
 ```
 
@@ -249,6 +352,8 @@ tmp <- dta_e0 %>%
 tmp %>% 
   ggplot(aes(x = year, y = mean_e0)) +
   geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
   stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
   labs(
     x = "Year", 
@@ -258,8 +363,22 @@ tmp %>%
     caption = "Unweighted average of all available countries, replication and updating of figure 1"
   )
 
-ggsave("figures/e0_limits/appendix/fig_1_a_all_hmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_1_a_all_hmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
   
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  labs(
+    x = "Year", 
+    y = "Life expectancy in years"
+  )
+
+ggsave(here("figures", "e0_limits", "appendix", "fig_1_a_all_hmd_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+  
+
 ```
 
 The fit is clearly less linear over time. This is likely due to changing composition of the countries over time, perhaps due to many Eastern European countries appearing post 1990ish, pulling the average down, but then increasing quickly thereafter. 
@@ -376,6 +495,8 @@ tmp %>%
   ggplot(aes(x = year, y = mean_e0)) +
   geom_point() +
   stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
   geom_point(
     aes(x = year, y = e0),
     inherit.aes = F, 
@@ -383,18 +504,40 @@ tmp %>%
       filter(sex == "total") %>% 
       filter(code == "GBR_NP") %>% 
       filter(between(year, 1955, 2016)) ,
-    colour = "darkred", shape = 17
+    colour = "darkred", shape = 1
   ) + 
   labs(
     x = "Year", 
     y = "Life expectancy",
-    title = "Life expectancy over time for average of high income countries (black) and the UK (red)",
-    subtitle = "The UK fell below the average in the 1960s, started to converge in the 2000s, then fell back after 2012",
-    caption = "Black line is unweighted average of 21 countries from White 2002. Source: HMD"
+    title = "Life expectancy over time for UK and high income average",
+    subtitle = "Red unfilled: UK; black filled: mean of 21 high income nations",
+    caption = "Black dashed line: linear regression of mean of 21 high income countries. Source: HMD"
     
   )
-ggsave("figures/pt1_white_update_uk.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/fig_01_b_highincomeuk.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt1_white_update_uk.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_01_b_highincomeuk.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  scale_x_continuous(breaks = seq(1955, 2015, by = 5)) + 
+  scale_y_continuous(breaks = seq(65, 85, by = 1)) + 
+  geom_point(
+    aes(x = year, y = e0),
+    inherit.aes = F, 
+    data = dta_e0 %>% 
+      filter(sex == "total") %>% 
+      filter(code == "GBR_NP") %>% 
+      filter(between(year, 1955, 2016)) ,
+    colour = "darkred", shape = 1
+  ) + 
+  labs(
+    x = "Year", 
+    y = "Life expectancy"
+  )
+ggsave(here("figures", "pt1_white_update_uk_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_01_b_highincomeuk_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 
 ```
@@ -432,13 +575,34 @@ tmp %>%
     x = "Year", 
     y = "Life expectancy",
     title = "Life expectancy over time for average of all available countries (black) and the UK (red)",
-    subtitle = "The UK fell below the average in the 1960s, started to converge in the 2000s, then fell back after 2012",
+    
     caption = "Black line is unweighted average of all countries available in HMD for each year."
     
   )
 
-ggsave("figures/e0_limits/appendix/fig_01_b_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_01_b_allhmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
+
+
+tmp %>% 
+  ggplot(aes(x = year, y = mean_e0)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F, colour = "black", linetype = "dashed") +
+  geom_point(
+    aes(x = year, y = e0),
+    inherit.aes = F, 
+    data = dta_e0 %>% 
+      filter(sex == "total") %>% 
+      filter(code == "GBR_NP") %>% 
+      filter(between(year, 1955, 2016)) ,
+    colour = "darkred", shape = 17
+  ) + 
+  labs(
+    x = "Year", 
+    y = "Life expectancy"
+  )
+
+ggsave(here("figures", "e0_limits", "appendix", "fig_01_b_allhmd_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 
@@ -592,12 +756,240 @@ tmp %>%
     caption = "Unweighted average of 21 high income countries in White 2002. Linear trends as dashed lines"
   )
 
-ggsave("figures/pt1_sandwich.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/fig_1_c_sandwich.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt1_sandwich.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_1_c_sandwich.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(aes(x = year)) +
+  geom_point(aes(y = max_e0), colour = "darkgreen") +
+  geom_text(
+    aes(x = year, y = max_e0, label = which_code_max), 
+    inherit.aes = F,
+    colour = "darkgreen",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = 0.5
+  ) + 
+  geom_point(aes(y = mean_e0)) +
+  geom_point(aes(y = min_e0), colour = "red") +
+  geom_point(aes(y = uk_e0), colour = "darkred", shape = 17) +
+  geom_text(
+    aes(x = year, y = min_e0, label = which_code_min), 
+    inherit.aes = F,
+    colour = "red",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = - 0.5
+  ) + 
+  stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "darkgreen", linetype = "dashed") +
+  stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
+  stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "darkred", linetype = "dashed") +
+  labs(
+    x = "Year", y = "Life expectancy in years"
+  )
+
+ggsave(here("figures", "pt1_sandwich_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "fig_1_c_sandwich_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 
 ```
 
 In the figure above, the red dots show the worst performing of the 21 high income countries, the green dots that for the best performing country. The black dots show the average (mean) for these countries, and the blue dots show the life expectancies for the UK. Every five years, the best and worst performing country is labelled. 
+
+Table summarising above 
+
+* Intercept: $e_0$ in 1955
+* Slope: Average $e_0$ gain per year since
+* Fit: $R^2$
+
+For worst, best, mean
+
+```{r}
+summary_best_worst_mean_hi <- 
+  dta_e0 %>% 
+    filter(code %in% high_income_countries) %>% 
+    filter(sex == "total") %>% 
+    filter(between(year, 1955, 2016)) %>% 
+    group_by(year) %>% 
+    summarise(
+      max_e0 = max(e0, na.rm = T),
+      which_code_max = code[e0 == max(e0)],
+      min_e0 = min(e0, na.rm = T),
+      which_code_min = code[e0 == min(e0)],
+      mean_e0 = mean(e0, na.rm = T),
+      uk_e0 = e0[code == "GBR_NP"]
+      ) %>% 
+    ungroup() %>% 
+    select(year, min_e0, max_e0, mean_e0) %>% 
+    gather(-year, key = "popn", value = "e0") %>% 
+    group_by(popn) %>% 
+    nest() %>% 
+    mutate(model = map(data, ~lm(e0 ~ year, data = .))) %>% 
+    mutate(mdl_tidy = map(model, broom::tidy)) %>% 
+    mutate(mdl_diag = map(model, broom::glance))
+
+```
+
+```{r, results='asif'}
+pt1 <- 
+  summary_best_worst_mean_hi %>% 
+    select(popn, mdl_tidy) %>% 
+    unnest(mdl_tidy) %>% 
+    filter(term == "year") 
+
+pt2 <- 
+  summary_best_worst_mean_hi %>% 
+      select(popn, mdl_diag) %>% 
+      unnest(mdl_diag) %>% 
+    select(popn, r.squared, adj.r.squared)
+
+pt3 <- 
+  dta_e0 %>% 
+    filter(code %in% high_income_countries) %>% 
+    filter(sex == "total") %>% 
+    filter(between(year, 1955, 2016)) %>% 
+    group_by(year) %>% 
+    summarise(
+      max_e0 = max(e0, na.rm = T),
+      which_code_max = code[e0 == max(e0)],
+      min_e0 = min(e0, na.rm = T),
+      which_code_min = code[e0 == min(e0)],
+      mean_e0 = mean(e0, na.rm = T),
+      uk_e0 = e0[code == "GBR_NP"]
+      ) %>% 
+    ungroup() %>% 
+    select(year, min_e0, max_e0, mean_e0) %>% 
+    filter(year == 1955) %>% 
+    gather(-year, key = "popn", value = "e0_1955") %>% 
+    select(-year)
+
+pt1 %>% left_join(pt2) %>% left_join(pt3) %>% 
+  select(-term) %>%
+  ungroup() %>% 
+  mutate(popn = case_when(
+    popn == "min_e0"  ~ "Lowest", 
+    popn == "max_e0"  ~ "Highest", 
+    popn == "mean_e0"  ~ "Average", 
+    TRUE ~ NA_character_
+  )) %>% 
+  rename(slope = estimate) %>% 
+  select(popn, e0_1955, slope, everything(), -p.value) %>% 
+  kable(digits = 3,
+        col.names = c("Population", "e0 in 1955", "Average annual gain", "SE", "t value", "R squared", "Adj. R Squared")) %>% 
+  kable_styling() 
+```
+
+Life expectancy for all countries 
+
+```{r}
+summary_best_worst_mean_hi <- 
+  dta_e0 %>% 
+    filter(code %in% all_distinct_countries) %>% 
+    filter(sex == "total") %>% 
+    filter(between(year, 1955, 2016)) %>% 
+    group_by(year) %>% 
+    summarise(
+      max_e0 = max(e0, na.rm = T),
+      which_code_max = code[e0 == max(e0)],
+      min_e0 = min(e0, na.rm = T),
+      which_code_min = code[e0 == min(e0)],
+      mean_e0 = mean(e0, na.rm = T),
+      uk_e0 = e0[code == "GBR_NP"]
+      ) %>% 
+    ungroup() %>% 
+    select(year, min_e0, max_e0, mean_e0) %>% 
+    gather(-year, key = "popn", value = "e0") %>% 
+    group_by(popn) %>% 
+    nest() %>% 
+    mutate(model = map(data, ~lm(e0 ~ year, data = .))) %>% 
+    mutate(mdl_tidy = map(model, broom::tidy)) %>% 
+    mutate(mdl_diag = map(model, broom::glance))
+
+```
+
+```{r, results = 'asis'}
+pt1 <- 
+  summary_best_worst_mean_hi %>% 
+    select(popn, mdl_tidy) %>% 
+    unnest(mdl_tidy) %>% 
+    filter(term == "year") 
+
+pt2 <- 
+  summary_best_worst_mean_hi %>% 
+      select(popn, mdl_diag) %>% 
+      unnest(mdl_diag) %>% 
+    select(popn, r.squared, adj.r.squared)
+
+pt3 <- 
+  dta_e0 %>% 
+    filter(code %in% all_distinct_countries) %>% 
+    filter(sex == "total") %>% 
+    filter(between(year, 1955, 2016)) %>% 
+    group_by(year) %>% 
+    summarise(
+      max_e0 = max(e0, na.rm = T),
+      which_code_max = code[e0 == max(e0)],
+      min_e0 = min(e0, na.rm = T),
+      which_code_min = code[e0 == min(e0)],
+      mean_e0 = mean(e0, na.rm = T),
+      uk_e0 = e0[code == "GBR_NP"]
+      ) %>% 
+    ungroup() %>% 
+    select(year, min_e0, max_e0, mean_e0) %>% 
+    filter(year == 1955) %>% 
+    gather(-year, key = "popn", value = "e0_1955") %>% 
+    select(-year)
+
+pt1 %>% left_join(pt2) %>% left_join(pt3) %>% 
+  select(-term) %>%
+  ungroup() %>% 
+  mutate(popn = case_when(
+    popn == "min_e0"  ~ "Lowest", 
+    popn == "max_e0"  ~ "Highest", 
+    popn == "mean_e0"  ~ "Average", 
+    TRUE ~ NA_character_
+  )) %>% 
+  rename(slope = estimate) %>% 
+  select(popn, e0_1955, slope, everything(), -p.value) %>% 
+  kable(digits = 3,
+        col.names = c("Population", "e0 in 1955", "Average annual gain", "SE", "t value", "R squared", "Adj. R Squared")) %>% 
+  kable_styling() 
+```
+
+Let's do the above, but for all countries 
+
+```{r}
+
+all_countries_summary <- 
+  dta_e0 %>% 
+    filter(code %in% all_distinct_countries) %>% 
+    mutate(high_income = ifelse(code %in% high_income_countries, "High Income", "Other")) %>% 
+    filter(between(year, 1955, 2016)) %>%
+    mutate(start_year = year - min(year)) %>% 
+    group_by(code, high_income, sex) %>% 
+    nest() %>% 
+    mutate(linmod = map(data, ~lm(e0 ~ start_year, data = .))) %>% 
+    mutate(
+      tidied  = map(linmod, broom::tidy), 
+      glanced = map(linmod, broom::glance)
+    ) %>% 
+    select(code, sex, high_income, tidied, glanced) %>% 
+    unnest(cols = c(tidied, glanced), names_sep = "_") %>% 
+    select(code, high_income, sex, 
+           term = tidied_term, estimate = tidied_estimate, SE = tidied_std.error, t_value = tidied_statistic,
+           r_squared = glanced_r.squared, adj_r_squared = glanced_adj.r.squared
+    ) %>% 
+    arrange(high_income, code, sex)
+
+
+wb <- createWorkbook()
+addWorksheet(wb, sheetName = "All Countries Summaries")
+writeData(wb = wb, sheet = "All Countries Summaries", x = all_countries_summary)
+openxlsx::saveWorkbook(wb, file = here("tables", "all_summaries.xlsx"), overwrite = TRUE)
+
+all_countries_summary
+```
+
+
 
 ```{r}
 tmp %>% 
@@ -668,6 +1060,38 @@ tmp %>%
   )
 
 ggsave("figures/e0_limits/appendix/fig_1_c_sandwich_all_hmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(aes(x = year)) +
+  geom_point(aes(y = max_e0), colour = "darkgreen") +
+  geom_text(
+    aes(x = year, y = max_e0, label = which_code_max), 
+    inherit.aes = F,
+    colour = "darkgreen",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = 0.5
+  ) + 
+  geom_point(aes(y = mean_e0)) +
+  geom_point(aes(y = min_e0), colour = "red") +
+  geom_point(aes(y = uk_e0), colour = "darkred", shape = 17) +
+  geom_text(
+    aes(x = year, y = min_e0, label = which_code_min), 
+    inherit.aes = F,
+    colour = "red",
+    data = tmp %>% filter(year %in% seq(1955, 2015, by = 5)), 
+    nudge_y = - 0.5
+  ) + 
+  stat_smooth(aes(y = max_e0), method = "lm", se = F, colour = "darkgreen", linetype = "dashed") +
+  stat_smooth(aes(y = min_e0), method = "lm", se = F, colour = "red", linetype = "dashed") +
+  stat_smooth(aes(y = mean_e0), method = "lm", se = F, colour = "black", linetype = "dashed") +
+  stat_smooth(aes(y = uk_e0), method = "lm", se = F, colour = "darkred", linetype = "dashed") +
+  labs(
+    x = "Year", y = "Life expectancy in years"
+  )
+
+ggsave("figures/e0_limits/appendix/fig_1_c_sandwich_all_hmd_plain.png", height = 12, width = 20, units = "cm", dpi = 300)
+
+
 
 ```
 
@@ -995,7 +1419,7 @@ tmp %>%
     caption = "Unweighted average (mean) of 21 countries from White 2002"
   )
 
-ggsave("figures/supp_avg_ch_e0_cf_scot.png", height = 12, width = 29, units = "cm", dpi = 300)
+ggsave(here("figures", "supp_avg_ch_e0_cf_scot.png"), height = 12, width = 29, units = "cm", dpi = 300)
 
 
 
@@ -1139,9 +1563,9 @@ fig03 +
   geom_smooth(se = F, colour = "blue",
               data = dta_for_fig03 %>% filter(code != "PRT"))
 
-ggsave("figures/pt2_white_orig_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt2_white_orig_smoother.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
-ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_smoother.png", height =12, width =20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_2_a_change_start_1996_smoother.png"), height =12, width =20, units = "cm", dpi = 300)
 
 
 
@@ -1180,7 +1604,7 @@ print(fig)
 
 
 
-ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_allhmd.png", height =12, width =20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_2_a_change_start_1996_allhmd.png"), height =12, width =20, units = "cm", dpi = 300)
 
 
 fig + 
@@ -1189,7 +1613,7 @@ fig +
   geom_smooth(se = F, colour = "blue",
               data = dta_for_fig03 %>% filter(code != "PRT"))
 
-ggsave("figures/e0_limits/appendix/fig_2_a_change_start_1996_allhmd_smoother.png", height =12, width =20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix", "fig_2_a_change_start_1996_allhmd_smoother.png"), height =12, width =20, units = "cm", dpi = 300)
 
 
 ```
@@ -1224,15 +1648,15 @@ fig03_update <- tmp %>%
 
 print(fig03_update)
 
-ggsave("figures/pt2_white_update.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/fig2b_start_change_2016.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt2_white_update.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","fig2b_start_change_2016.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 fig03_update + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
   geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
 
-ggsave("figures/pt2_white_update_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/appendix/fig2b_start_change_2016.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","pt2_white_update_smoother.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","fig2b_start_change_2016.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 
 
@@ -1269,13 +1693,76 @@ tmp %>%
     x = "Life expectancy in 2010 (years)", y = "Average annual change in life expectancy"
     )  
 
-ggsave("figures/pt1_supp_white_2010plus.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","pt1_supp_white_2010plus.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
-ggsave("figures/e0_limits/appendix/ch_since_2010.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","ch_since_2010.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 
 This is an important 'dog that didn't bark': there's no apparent association between the rate of slowdown since 2010 and the life expectancy in 2010. Though the long-term tendency may be for there to be a slowdown, it's not something that explains what happened this time. 
+
+Requestion addition: change from 1997 to 2016 
+
+```{r}
+tmp <- dta_e0 %>% 
+  filter(code %in% high_income_countries) %>% 
+  filter(sex == "total") %>% 
+  filter(between(year, 1997, 2016)) %>% 
+  group_by(code) %>% 
+  arrange(year) %>% 
+  mutate(val_in_1997 = ifelse(1997 %in% year, e0[year == 1997], NA)) %>% 
+  mutate(ch_e0 = e0 - lag(e0)) %>% 
+  mutate(mean_ch_e0 = mean(ch_e0, na.rm = T)) %>% 
+  filter(year == min(year)) %>% 
+  ungroup() %>% 
+  select(code, val_in_1997, mean_ch_e0) 
+
+fig03_update_b <- tmp %>% 
+  ggplot(aes(x = val_in_1997, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    title = "Life expectancy in 1997 against average change in life expectancy up to 2016", 
+    subtitle = "21 high income countries",
+    x = "Life expectancy in 1997 (years)", y = "Average annual change in life expectancy"
+    )  
+
+print(fig03_update_b)
+
+ggsave(here("figures","pt2_white_update_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","fig2b_start_change_2016_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+
+fig03_update_b_plain <- tmp %>% 
+  ggplot(aes(x = val_in_1997, y = mean_ch_e0)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.4)) + 
+  ggrepel::geom_text_repel(aes(label = code)) +
+  labs(
+    x = "Life expectancy in 1997 (years)", y = "Average annual change in life expectancy"
+    )  
+
+print(fig03_update_b_plain)
+
+ggsave(here("figures","pt2_white_update_b_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","fig2b_start_change_2016_b_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+
+
+fig03_update_b + 
+  stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
+  geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
+
+ggsave(here("figures","pt2_white_update_smoother_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","fig2b_start_change_2016_b.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+
+
+
+```
+
+
 
 Now all countries, up to 2016
 
@@ -1309,13 +1796,13 @@ fig03_update <- tmp %>%
 print(fig03_update)
 
 
-ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","appendix","fig2b_start_change_2016_allhmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 fig03_update + 
   stat_smooth(method = "lm", se = F, colour = "red", linetype = "dashed", data = tmp %>% filter(code != "PRT")) + 
   geom_smooth(se = F, colour = "blue", data = tmp %>% filter(code != "PRT"))
 
-ggsave("figures/e0_limits/appendix/fig2b_start_change_2016_allhmd_smoother.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits", "appendix","fig2b_start_change_2016_allhmd_smoother.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 
 
@@ -1357,9 +1844,50 @@ tmp %>%
     caption = "Based on figure 3 of White (2002)"
   )
 
-ggsave("figures/pt1_white_sliced.png", height = 12, width = 20, units = "cm", dpi = 300)
-ggsave("figures/e0_limits/sliced_startchange.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "pt1_white_sliced.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","sliced_startchange.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F) +
+  labs(
+    x = "Life expectancy at start of decade", 
+    y = "Average annual change in life expectancy over decade"
+  )
+
+ggsave(here("figures", "pt1_white_sliced_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","sliced_startchange_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = Decade, shape = Decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = Decade, shape = Decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F, colour = "black") +
+  labs(
+    x = "Life expectancy at start of decade", 
+    y = "Average annual change in life expectancy over decade"
+  ) 
+  
+
+ggsave(here("figures", "pt1_white_sliced_plain_blackwhite.png"), height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures","e0_limits","sliced_startchange_plain_blackwhite.png"), height = 12, width = 20, units = "cm", dpi = 300)
 
 ```
 This figure shows that the degree to which the limits-to-growth argument holds in high income countries is falling, rather than increasing, again suggesting it is not an important factor in explaining the recent slowdown in the UK (highlighted with a translucent symbol). 
@@ -1400,7 +1928,27 @@ tmp %>%
     caption = "Based on figure 3 of White (2002)"
   )
 
-ggsave("figures/e0_limits/appendix/sliced_startchange_allhmd.png", height = 12, width = 20, units = "cm", dpi = 300)
+ggsave(here("figures", "e0_limits","appendix","sliced_startchange_allhmd.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
+tmp %>% 
+  ggplot(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade)
+    ) + 
+  geom_point() + 
+  geom_point(
+    aes(x = e0, y = mean_ch_e0, group = Decade, colour = Decade, shape = Decade),
+    inherit.aes = FALSE, 
+    data = tmp2,
+    shape = 19, size = 5, alpha = 0.25
+  ) +
+  stat_smooth(method = "lm", se = F) +
+  labs(
+    x = "Life expectancy at start of decade", 
+    y = "Average annual change in life expectancy over decade"
+  )
+
+ggsave(here("figures", "e0_limits","appendix","sliced_startchange_allhmd_plain.png"), height = 12, width = 20, units = "cm", dpi = 300)
+
 
 
 ```
@@ -1568,7 +2116,7 @@ dta_e0 %>%
   mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
   mutate(diff_from_mean = e0 - mean_e0) %>% 
   summarise(var = var(diff_from_mean)) %>% 
-  ggplot(aes(x = year, y = var, group = group)) + 
+  ggplot(aes(x = year, y = var, group = group, shape = group)) + 
   geom_point() + geom_line() +
   scale_y_continuous(limits = c(0, 12))
 
@@ -1586,7 +2134,7 @@ dta_e0 %>%
   mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
   mutate(diff_from_mean = e0 - mean_e0) %>% 
   summarise(var = var(diff_from_mean)) %>% 
-  ggplot(aes(x = year, y = var, group = group)) + 
+  ggplot(aes(x = year, y = var, group = group, shape = group)) + 
   geom_point() + geom_line() +
   scale_y_continuous(limits = c(0, 12))
 
@@ -1606,7 +2154,7 @@ dta_e0 %>%
   mutate(mean_e0 = mean(e0, na.rm = T)) %>% 
   mutate(diff_from_mean = e0 - mean_e0) %>% 
   summarise(var = var(diff_from_mean)) %>% 
-  ggplot(aes(x = year, y = var, group = group)) + 
+  ggplot(aes(x = year, y = var, group = group, shape = group)) + 
   geom_point() + geom_line() +
   scale_y_continuous(limits = c(0, 20))
 
@@ -1844,7 +2392,7 @@ fig_all_upto2016 <- dta_for_figall_upto2016 %>%
 print(fig_all_upto2016)
 
 
-png(filename = "figures/2x1_all_e0_che0.png", width = 35, height = 15, res = 300, units = "cm") 
+png(filename = here("figures","2x1_all_e0_che0.png"), width = 35, height = 15, res = 300, units = "cm") 
 gridExtra::grid.arrange(fig_all_upto1996, fig_all_upto2016, nrow = 1)
 dev.off()
 
