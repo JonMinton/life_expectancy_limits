@@ -1,0 +1,118 @@
+---
+title: "uk_sex_diff_e0"
+output: html_notebook
+---
+
+# prereqs
+
+```{r}
+pacman::p_load(tidyverse, patchwork)
+# devtools::install_github("thomasp85/patchwork")
+
+e0_dta <-readRDS("../tidy_data/e0_period.rds")
+
+```
+
+# get UK 
+
+```{r}
+unique(e0_dta$code)
+
+e0_dta %>%
+  filter(code == "GBRTENW") %>%
+  filter(year %in% seq(1841, 2011, by = 10)) %>% 
+  filter(sex != "total") %>% 
+  spread(sex, e0) %>% 
+  mutate(
+    abs_difference = female - male,
+    rel_difference = 100 * (female - male) / male
+  ) %>% 
+  write.csv("clipboard")
+         
+
+
+```
+
+now mx
+
+```{r}
+mx_data <- read_rds("../tidy_data/Mx_data.rds")
+
+```
+
+
+```{r}
+p1 <- 
+mx_data %>% 
+  filter(code == "GBRTENW") %>% 
+  filter(year == 2011) %>% 
+  filter(sex != "total") %>% 
+  filter(between(age, 0, 90)) %>% 
+  ggplot(aes(x = age, y = Mx, group = sex, colour = sex, linetype = sex)) + 
+  geom_line() + 
+  scale_y_log10(breaks = 10^(-5:-1), labels = c("1-in-100,000", "1-in-10,000", "10-in-1000", "1-in-100", "1-in-10")) + 
+  labs(x = "Age in single years", y = "Risk of dying at given age", 
+       title = "Risk of dying in 2011 by age", 
+       subtitle = "Country: England & Wales, Source: Human Mortality Database"
+  )
+
+```
+
+```{r}
+diffs <- 
+  mx_data %>% 
+    filter(code == "GBRTENW") %>% 
+    filter(year == 2011) %>% 
+    filter(sex != "total") %>% 
+    spread(sex, Mx) %>% 
+    filter(between(age, 0, 90)) %>% 
+    mutate(
+      abs_difference = female - male,
+      rel_difference = 100 * (female - male) / male
+    ) 
+
+
+```
+
+```{r}
+p2 <- 
+diffs %>% 
+  ggplot(aes(x = age, y = -abs_difference)) + 
+  geom_line() +
+  scale_y_log10(breaks = 10^(-1:-6), labels = c("1-in-10", "1-in-100", "1-in-1000", "1-in-10,000", "1-in-100,000", "1-in-million")) + 
+  geom_vline(xintercept = 18, linetype = "dashed") + 
+  labs(
+    x = "Age in years", y = "Additional risk for males", 
+    title = "Additional absolute risk for males",
+    subtitle = "Country: England & Wales; Source: Human Mortality Database",
+    caption = "Vertical dashed line: Age 18"
+  )
+
+```
+
+
+
+```{r}
+p3 <- 
+diffs %>% 
+  ggplot(aes(x = age, y = -rel_difference)) + 
+  geom_line() +
+  scale_y_continuous(breaks = seq(-20, 70, by = 20)) + 
+  geom_hline(yintercept = 0) + 
+  geom_vline(xintercept = 18, linetype = "dashed") + 
+  labs(
+    x = "Age in years", y = "Percent higher risk for males at specified age", 
+    title = "Additional relative (percentage) risk for males",
+    subtitle = "Country: England & Wales; Source: Human Mortality Database",
+    caption = "Vertical dashed line: Age 18"
+  )
+
+```
+Now to arrange (patchwork?)
+
+```{r}
+p_out <- p1 / (p2 | p3)
+
+ggsave("sex_risk_2011.png", height = 20, width = 30, units = "cm", dpi = 300)
+
+```
